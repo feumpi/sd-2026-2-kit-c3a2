@@ -11,9 +11,10 @@ distribuído, `docker compose` e deploy gratuito.
 
 **<https://c3a2-gateway-vlib.onrender.com>**
 
-- **Abra essa URL no navegador antes de usar.** No plano gratuito os serviços dormem após 15
-  minutos sem tráfego. A página inicial acorda a inferência e o worker e, em 45 segundos, leva à
-  documentação interativa. Espere os dois quadros mostrarem `"status":"ok"`.
+- **Abra essa URL no navegador antes de usar e aguarde cerca de um minuto.** No plano gratuito
+  os serviços dormem após 15 minutos sem tráfego, e o primeiro acesso depois disso pode levar de
+  1 a 2 minutos. A página inicial acorda a inferência e o worker e, em 45 segundos, leva à
+  documentação interativa (medido: os três no ar 42 segundos depois de abrir a URL).
 - **Sem navegador** (por exemplo, só com `curl`), acorde os três e espere cada um responder
   (cerca de 30 segundos):
 

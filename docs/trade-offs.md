@@ -90,6 +90,10 @@ respondeu 503 e nenhum dos dois registrou subida. As chamadas voltavam com erro 
 1 s, em vez de esperar o serviço subir. Um acesso externo os acordou. Por isso a página inicial
 publicada faz o navegador de quem visita abrir o `/saude` de cada um.
 
+**Com a página**, numa medição com os três dormindo: só abrir a URL num navegador pôs o gateway
+no ar em 13 s, o worker em 31 s e a inferência em 42 s. Na sequência, o fluxo completo (login,
+predição, documento até concluir, busca e pergunta) levou 1,5 s, sem nenhum 503.
+
 **Aquecido** (6 amostras):
 
 | Etapa | Mediana | Máximo |

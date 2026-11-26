@@ -103,16 +103,18 @@ O sistema inteiro deve subir com UM comando. (Aula 14)
 - [x] Serviços se acham pelo nome; só `8000` (gateway) e `16686` (Jaeger) expostos
 - **Aceite:** `docker compose up --build` num clone limpo, **sem `.env`**; teste e2e passa.
 
-### [ ] 5. Deploy em nuvem (free tier) (R4)
+### [x] 5. Deploy em nuvem (free tier) (R4)
 
 Publicar e informar a URL publica no README. (Aula 13)
 
-- [ ] `render.yaml` (Blueprint): gateway, inferência, worker e Key Value no Render
-- [ ] Armazenamento vetorial no Postgres gratuito do Render; traces no Honeycomb
-- [ ] Segredos só no painel; nada sensível no repositório
-- [ ] URL pública no README
+- [x] `render.yaml` (Blueprint): gateway, inferência, worker e Key Value no Render
+- [x] Armazenamento vetorial no Postgres gratuito do Render; traces no Honeycomb
+- [x] Segredos só no painel; nada sensível no repositório
+- [x] URL pública no README
 - **Aceite:** fluxo completo (login → documento → tarefa → busca → pergunta) na URL pública,
   inclusive depois de os serviços terem dormido.
+- Verificado em 26/11/2026. Depois de dormirem, os serviços precisam ser despertados por acesso
+  externo: a raiz do gateway faz isso pelo navegador (ver o diário).
 
 ### [x] 6. Resiliencia (R5)
 
@@ -141,38 +143,38 @@ Rastreamento distribuido cobrindo gateway -> fila -> worker. (Aula 15)
 - **Aceite:** URL `https://` responde com certificado válido e `http://` redireciona.
 - Verificado em 26/11/2026 nos três serviços publicados.
 
-### [ ] 9. Secao de conformidade no README (R6)
+### [x] 9. Secao de conformidade no README (R6)
 
 Quais dados sao tratados, com qual finalidade e por quanto tempo. (LGPD, Aula 16)
 
-- [ ] Tabela dado → finalidade → onde fica → prazo, incluindo logs, traces, fila e terceiros
-- [ ] Todo prazo declarado é de fato aplicado (expurgo e TTL implementados e testados)
-- [ ] Revisão dos logs: nenhum dado pessoal gravado (roteiro do edital, item 4)
+- [x] Tabela dado → finalidade → onde fica → prazo, incluindo logs, traces, fila e terceiros
+- [x] Todo prazo declarado é de fato aplicado (expurgo e TTL implementados e testados)
+- [x] Revisão dos logs: nenhum dado pessoal gravado (roteiro do edital, item 4)
 
-### [ ] 10. Relatorio de trade-offs (R7)
+### [x] 10. Relatorio de trade-offs (R7)
 
 CAP, custo e latencia do seu sistema.
 
-- [ ] `docs/trade-offs.md`, curto, ligado no README
-- [ ] Latências **medidas** (local e publicado, com e sem cold start), não estimadas
+- [x] `docs/trade-offs.md`, curto, ligado no README
+- [x] Latências **medidas** (local e publicado, com e sem cold start), não estimadas
 
-### [ ] F2. README do projeto (R9.2)
+### [x] F2. README do projeto (R9.2)
 
-- [ ] Arquitetura (diagrama), como executar do zero, rotas com exemplos, variáveis de ambiente
-- [ ] URL pública, LGPD, trade-offs; aviso de que as credenciais do ambiente publicado
+- [x] Arquitetura (diagrama), como executar do zero, rotas com exemplos, variáveis de ambiente
+- [x] URL pública, LGPD, trade-offs; aviso de que as credenciais do ambiente publicado
       foram enviadas ao professor por e-mail (**sem** colocá-las no repositório)
-- [ ] Aviso de que, no ambiente publicado, a primeira requisição após inatividade pode levar
+- [x] Aviso de que, no ambiente publicado, a primeira requisição após inatividade pode levar
       de 1 a 2 minutos
-- [ ] Créditos ao kit do Prof. Howard Roatti
+- [x] Créditos ao kit do Prof. Howard Roatti
 
 ### [ ] F3. Verificação final e entrega (R9)
 
 - [x] Remover `referencia/` e os `README.md` de espera em `inferencia/` e `worker/`
 - [ ] Clone em OUTRA máquina (ou diretório limpo) e rode o comando unico seguindo só o README
-- [ ] A URL publica esta no ar?
+- [x] A URL publica esta no ar?
 - [ ] Usuário confirmou o envio das credenciais ao professor por e-mail
-- [ ] Toda configuracao esta em variavel de ambiente (nada fixo no codigo)?
-- [ ] Os logs estao livres de dados pessoais?
+- [x] Toda configuracao esta em variavel de ambiente (nada fixo no codigo)?
+- [x] Os logs estao livres de dados pessoais?
 - [ ] `uv run pytest`, `uv run pytest -m e2e` e `uv run ruff check .` verdes
 - [ ] Commits enviados ao GitHub
 - [ ] Lembrar o usuário de postar **apenas o link do repositório** no AVA

@@ -12,11 +12,11 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | 3 Dockerfiles e 4 Compose | concluídas em 26/11/2026 |
 | 1 JWT e 2 Rate limit | concluídas em 26/11/2026 |
 | 6 Resiliência | concluída em 26/11/2026 |
-| 7 Observabilidade | implementada e verificada no Jaeger; Honeycomb pendente do deploy |
 | 8 HTTPS | concluída em 26/11/2026 |
-| 5 Deploy | serviços no ar; fluxo completo pendente |
-| 9, 10 e F2 | redigidas; faltam as medições no ambiente publicado |
-| F3 Verificação final | pendente |
+| 5 Deploy | concluída em 26/11/2026 |
+| 7 Observabilidade no Honeycomb | confirmada em 26/11/2026 |
+| 9, 10 e F2 | concluídas em 26/11/2026 |
+| F3 Verificação final | falta o envio das credenciais e do link pelo usuário |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
 
@@ -419,6 +419,17 @@ serviços (seria contornar a proteção do provedor); ping externo periódico (e
 três serviços sempre ligados esgotariam as 750 h mensais em cerca de 10 dias).
 
 **Latências publicadas:** em [trade-offs](trade-offs.md#publicado).
+
+**Verificação da correção:** deploy só do gateway; os três registraram desligamento
+(23:43 UTC). Abrir a URL num navegador automatizado (Playwright) às 23:44:49 mostrou a tela de
+carregamento do Render e depois a página; gateway, worker e inferência registraram subida às
+23:45:02, 23:45:20 e 23:45:31; a página levou ao `/docs`. Em seguida,
+`medir_latencia.py --primeiro-uso` fez o fluxo completo em 1,5 s sem 503 e o e2e publicado
+passou (11, 2 pulados). Não foi observado o conteúdo final dos quadros da página.
+
+**Verificação final local, com o mesmo código:** 200 unitários, 13 e2e no compose, `ruff` sem
+apontamentos, nenhum dado pessoal nos logs. Antes da correção, um clone limpo do GitHub, sem
+`.env` e construído sem cache, subiu com um comando e passou nos mesmos testes.
 
 **Revisão do advisor:** apontou que o despertar só pode partir do cliente, que o ajuste antes
 sugerido (`URL_WORKER`) não acordaria o worker, e propôs a página no gateway.
