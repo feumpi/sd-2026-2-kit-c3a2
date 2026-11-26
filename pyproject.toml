@@ -12,7 +12,7 @@ package = false
 # (uv sync --frozen --only-group <servico>).
 [dependency-groups]
 comum = [
-    "fastapi==0.115.0",
+    "fastapi==0.165.0",
     "opentelemetry-api>=1.45.2",
     "opentelemetry-exporter-otlp-proto-http>=1.45.2",
     "opentelemetry-instrumentation-fastapi>=0.66b2",
@@ -20,7 +20,7 @@ comum = [
     "opentelemetry-sdk>=1.45.2",
     "pydantic==2.9.2",
     "redis==5.0.8",
-    "requests==2.32.3",
+    "requests==2.34.2",
     "uvicorn[standard]==0.30.6",
 ]
 gateway = [
