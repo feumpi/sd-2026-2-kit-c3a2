@@ -9,6 +9,7 @@ Voce NAO precisa entender machine learning para usar isto.
 So precisa saber: carregar_modelo() devolve um objeto com .prever(texto).
 """
 import os
+
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
