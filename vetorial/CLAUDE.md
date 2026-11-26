@@ -3,7 +3,7 @@
 Quarto serviço da arquitetura (R2). Local: container próprio. Nuvem: Postgres gratuito do
 Render. O mesmo SQL e o mesmo código servem aos dois, trocando só `DATABASE_URL`.
 
-Substitui o índice JSON do C2 (`referencia/c2a2/ingestao_indice.py`), de onde vêm o id por
+Substitui o índice JSON do C2, de onde vêm o id por
 hash e a idempotência.
 
 ## A criar

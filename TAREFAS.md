@@ -167,7 +167,7 @@ CAP, custo e latencia do seu sistema.
 
 ### [ ] F3. Verificação final e entrega (R9)
 
-- [ ] Remover `referencia/` e os `README.md` de espera em `inferencia/` e `worker/`
+- [x] Remover `referencia/` e os `README.md` de espera em `inferencia/` e `worker/`
 - [ ] Clone em OUTRA máquina (ou diretório limpo) e rode o comando unico seguindo só o README
 - [ ] A URL publica esta no ar?
 - [ ] Usuário confirmou o envio das credenciais ao professor por e-mail

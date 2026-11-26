@@ -25,7 +25,7 @@ CMD ["sh", "-c", "exec uvicorn gateway.app:app --host 0.0.0.0 --port ${PORT:-800
 - `.dockerignore`: `.git`, `.venv`, `.env*`, `docs`, `referencia`, `tests`, `**/CLAUDE.md`,
   `**/__pycache__`, `*.joblib`. (`vetorial/esquema.sql` precisa continuar incluído.)
 
-## Compose (modelo: `referencia/c2a2/docker-compose.yml`)
+## Compose
 
 - Um comando: `docker compose up --build`, **sem exigir `.env`** (padrões com
   `${VAR:-padrao}`).

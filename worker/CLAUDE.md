@@ -9,8 +9,6 @@ Retira tarefas da fila, pede o processamento à inferência e grava no banco vet
 | `worker.py` | C2 `ingestao/`, sem alteração | trocar `indice.adicionar` pelo fluxo abaixo |
 | `app.py` | criar | FastAPI com `/saude`; consumidor numa thread (lifespan) |
 
-Referência do C1: `referencia/c1a2/worker.py` e `fila.py`.
-
 ## Por que é um web service
 
 O Render gratuito **não tem background worker**. O mesmo processo serve `/saude` (porta

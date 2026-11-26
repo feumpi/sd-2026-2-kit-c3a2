@@ -8,7 +8,7 @@
 | `modelo.py` | C1 (do kit), sem alteração | usar como está |
 | `embeddings.py` | C2, sem alteração | trocar TF-IDF por `HashingVectorizer` de dimensão fixa |
 | `llm.py` | C2, sem alteração | usar como está (modo simulado sem `LLM_API_KEY`) |
-| `app.py` | criar | rotas abaixo; modelos em `referencia/c2a2/` |
+| `app.py` | criar | rotas abaixo |
 
 ## Rotas (todas exigem `X-Token-Interno`, menos `/saude`)
 
@@ -33,7 +33,7 @@ sempre, offline. Mantenha `vetorizar(texto) -> list[float]` (`ajustar` deixa de 
 Texto sem tokens gera vetor zero, e a distância de cosseno do pgvector dá `NaN`: recuse (422)
 ao processar e devolva lista vazia ao buscar.
 
-## Busca e RAG (modelo: `referencia/c2a2/recuperacao_app.py` e `geracao_app.py`)
+## Busca e RAG
 
 - A busca é feita no banco (ver `vetorial/CLAUDE.md`); descarte `score <= 0`.
 - Sem trecho relevante: responda que não há base, sem chamar o LLM.

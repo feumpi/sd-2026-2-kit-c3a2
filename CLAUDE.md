@@ -5,9 +5,11 @@ começar. Idioma: **português** (código, comentários, commits, README e docs)
 
 ## Estado atual
 
-O ambiente está preparado e **nada do trabalho foi implementado**. O progresso real está
-em [TAREFAS.md](TAREFAS.md); o histórico de decisões, em
-[docs/implementacao.md](docs/implementacao.md). Comece lendo os dois.
+Implementado e publicado em 26/11/2026. O progresso está em [TAREFAS.md](TAREFAS.md); o
+histórico de decisões, em [docs/implementacao.md](docs/implementacao.md). Comece lendo os dois.
+Este guia registra o plano seguido; onde divergir do diário, vale o diário. A pasta
+`referencia/` (código do C1/C2) foi removida na verificação final e continua no histórico do
+git.
 
 ## Prazo
 
@@ -155,21 +157,15 @@ cliente ──HTTPS/JWT────> │ login · jwt · rate limit · roteament
 ## Layout
 
 ```
-gateway/      API Gateway (app.py do kit)
-inferencia/   serviço de IA (modelo.py, embeddings.py, llm.py importados)
-worker/       consumidor da fila (worker.py, fila.py importados)
-vetorial/     pgvector: Dockerfile, esquema.sql, acesso a dados (a criar)
-comum/        circuit breaker, retentativa (importados) e observabilidade (a criar)
-tests/        pytest (hoje só a sanidade do ambiente)
-deploy/       instruções de publicação
-referencia/   código do C1/C2 só para consulta; apagar no final
-docs/         edital, ebook, diário, trade-offs (a criar)
+gateway/      API Gateway
+inferencia/   serviço de IA
+worker/       consumidor da fila
+vetorial/     pgvector: Dockerfile, esquema.sql e acesso a dados
+comum/        contrato da fila, validação, log, resiliência e observabilidade
+tests/        pytest (unitários e ponta a ponta)
+deploy/       instruções de publicação e medição de latência
+docs/         edital, ebook, diário e trade-offs
 ```
-
-Arquivos importados estão **sem alteração** (commit `chore: importa código reaproveitado…`):
-os imports ainda apontam para `app.` e `servicos.` e precisam ser adaptados. Por isso o
-`ruff check` acusa hoje 2 avisos I001 (`inferencia/modelo.py`, `worker/worker.py`) e o
-`pyright` acusa erros nesses arquivos importados.
 
 ## Ambiente (verificado em 26/11/2026)
 
