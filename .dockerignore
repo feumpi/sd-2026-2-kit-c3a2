@@ -1,0 +1,13 @@
+.git
+.venv
+.env*
+.pytest_cache
+.ruff_cache
+docs
+referencia
+tests
+**/CLAUDE.md
+**/*.md
+**/__pycache__
+**/*.pyc
+**/*.joblib
