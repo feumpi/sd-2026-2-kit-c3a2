@@ -60,13 +60,12 @@ Fatos conferidos na documentação do Render em 26/11/2026 (reconfira se algo di
 
 ## Blueprint
 
-[render.yaml.rascunho](render.yaml.rascunho) passou no `render blueprints validate`. Isso
-confirma o esquema, não o comportamento: confira em execução se `URL_INFERENCIA` e
+[render.yaml](../render.yaml) passou no `render blueprints validate`. Isso confirma o
+esquema, não o comportamento: confira em execução se `URL_INFERENCIA` e
 `URL_WORKER` (via `envVarKey: RENDER_EXTERNAL_URL`) chegam como URLs públicas
 `https://….onrender.com`. Não troque por `property: host`/`hostport`, que são endereços de
-rede privada. Mova o arquivo para `./render.yaml`, ajuste ao código e valide de novo. A partir
-daí o plugin do Render roda `render blueprints validate` a cada edição desse arquivo (o
-`.rascunho` não aciona).
+rede privada. O plugin do Render roda `render blueprints validate` a cada edição desse
+arquivo.
 
 ## Passos que dependem do usuário
 

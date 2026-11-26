@@ -328,6 +328,16 @@ texto, senha, token, usuário nem IP.
 
 ![Trace único no Jaeger](imagens/trace-jaeger.png)
 
+**Revisão do advisor:** sem bloqueios; manter a tarefa aberta até conferir o Honeycomb.
+
+## Tarefa 5 — Preparação do deploy (26/11/2026)
+
+- `render.yaml` na raiz, a partir do rascunho, com os tempos-limite da nuvem num grupo de
+  variáveis; os únicos campos preenchidos no painel são `USUARIO_DEMO`, `SENHA_DEMO` e os três
+  `OTEL_EXPORTER_OTLP_HEADERS`. `render blueprints validate`: válido, 7 recursos.
+- Credenciais geradas em `~/.config/c3a2/credenciais.env` (fora do repositório, permissão 600),
+  sem exibição.
+
 <!--
 Modelo para as próximas etapas:
 
