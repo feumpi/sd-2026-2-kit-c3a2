@@ -16,14 +16,17 @@ diário atualizados, e commit.
 
 ## Ordem de execução
 
+Ordem ajustada por decisão do usuário em 26/11/2026: o deploy vem depois do código, para o
+gateway nunca ficar público sem autenticação e haver uma única parada para o usuário.
+
 | Ordem | Tarefa | Por que nesta ordem |
 |-------|--------|---------------------|
 | 1 | F1 Base da arquitetura | tudo depende dos serviços |
 | 2 | 3 Dockerfiles e 4 Compose | comando único funcionando cedo |
-| 3 | 5 Deploy e 8 HTTPS | "publique cedo, ainda que incompleto" (edital) |
-| 4 | 1 JWT e 2 Rate limit | protege o que já está público |
-| 5 | 6 Resiliência | R5 |
-| 6 | 7 Observabilidade | R5 |
+| 3 | 1 JWT e 2 Rate limit | protege antes de publicar |
+| 4 | 6 Resiliência | R5 |
+| 5 | 7 Observabilidade | R5 |
+| 6 | 5 Deploy e 8 HTTPS | depende de ações do usuário no painel |
 | 7 | 9 LGPD, 10 Trade-offs, F2 README | descrevem o sistema pronto |
 | 8 | F3 Verificação final | critério de pronto do edital |
 
@@ -49,18 +52,18 @@ O banco publicado é criado pelo Blueprint na Tarefa 5 (não criar antes: expira
 
 ## Núcleo obrigatório
 
-### [ ] F1. Base da arquitetura (R2, R9.3)
+### [x] F1. Base da arquitetura (R2, R9.3)
 
 Gateway + serviço de inferência + worker de fila + armazenamento vetorial.
 Detalhes no `CLAUDE.md` de cada diretório.
 
-- [ ] F1.1 `comum/`: ajustar `circuit_breaker.py` e `resiliencia.py` ao uso compartilhado
-- [ ] F1.2 `vetorial/`: `esquema.sql` (pgvector) e acesso a dados (escrita idempotente, busca)
-- [ ] F1.3 `inferencia/`: `app.py` com `/predict`, `/processar`, `/buscar`, `/perguntar`, `/saude`;
+- [x] F1.1 `comum/`: ajustar `circuit_breaker.py` e `resiliencia.py` ao uso compartilhado
+- [x] F1.2 `vetorial/`: `esquema.sql` (pgvector) e acesso a dados (escrita idempotente, busca)
+- [x] F1.3 `inferencia/`: `app.py` com `/predict`, `/processar`, `/buscar`, `/perguntar`, `/saude`;
       embeddings de dimensão fixa; token interno
-- [ ] F1.4 `worker/`: consumo confiável da fila, dead-letter, chamada à inferência, gravação
+- [x] F1.4 `worker/`: consumo confiável da fila, dead-letter, chamada à inferência, gravação
       no pgvector, rota `/saude`
-- [ ] F1.5 `gateway/`: roteamento `/predict`, `/documentos`, `/tarefas/{id}`, `/buscar`,
+- [x] F1.5 `gateway/`: roteamento `/predict`, `/documentos`, `/tarefas/{id}`, `/buscar`,
       `/perguntar`, `/saude`, `/`
 - **Aceite:** testes unitários de cada serviço passam sem rede, Docker ou chave de API.
 

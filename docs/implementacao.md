@@ -8,7 +8,7 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | Etapa | Status |
 |-------|--------|
 | Fase 0 — Ambiente | concluída e validada em 26/11/2026 |
-| F1 Base da arquitetura | pendente |
+| F1 Base da arquitetura | concluída em 26/11/2026 |
 | 1 a 10 (kit) | pendentes |
 | F2 README e F3 Verificação final | pendentes |
 
@@ -153,6 +153,48 @@ a seção anterior menciona o Neon, vale esta decisão.
 - Acrescentados aos guias três riscos vistos na releitura: `psycopg` ausente na imagem do
   gateway, `register_vector` antes de existir a extensão e tempo-limite longo somado a
   retentativas.
+
+## Decisões do usuário no início da implementação (26/11/2026)
+
+| Tema | Decisão | Motivo |
+|------|---------|--------|
+| Ordem | deploy (5 e 8) depois de F1, 3, 4, 1, 2, 6 e 7 | uma só parada do usuário; gateway nunca público sem JWT; menos minutos de build. Risco aceito: surpresas do deploy aparecem mais tarde |
+| Blueprint | criado pelo usuário no painel | os segredos são digitados só ali |
+| Credenciais publicadas | arquivo local fora do repositório, permissão 600 | os scripts de aceite leem sem exibir |
+| Autorizações | Docker deste projeto; operar os recursos `c3a2-*` depois de criados; Chrome para conferir painel e traces | — |
+
+## F1 — Base da arquitetura (26/11/2026)
+
+**O que foi feito:** `comum/` (contrato da fila, validação de entrada, log e erros, token
+interno, propagação de contexto), `vetorial/` (esquema e repositório), serviço de inferência,
+worker e roteamento no gateway, cada parte com testes e commit próprio.
+
+**Decisões e justificativas:**
+
+- **Contrato em `comum/contrato.py`**, para gateway e worker concordarem sem um importar o
+  outro; o lado consumidor ficou em `worker/fila.py`.
+- **Mesma validação nos dois lados** (`comum/modelos.py`): entrada inválida morre no gateway e
+  nunca conta como falha de dependência (Aula 11).
+- **Vetor enviado como texto com `::vector`**, em vez de `register_vector`: funciona mesmo
+  antes de a extensão existir, eliminando a corrida entre inferência e worker na subida. A
+  dependência `pgvector` do Python deixou de ser usada.
+- **Fila confiável com saída atômica:** a mensagem só sai de `processando` na mesma transação
+  que conclui, reenfileira ou descarta. No C2 o `lrem` num `finally` podia perder a mensagem
+  se o reenfileiramento falhasse.
+- **Falha transitória não gasta tentativa** (Aulas 8 e 11): espera progressiva e, só depois de
+  `TAREFA_IDADE_MAXIMA`, dead-letter. Permanente: `MAX_TENTATIVAS`.
+- **Retenção (Aula 16):** expurgo na subida e periódico; fila, dead-letter e estado da tarefa
+  têm prazo no Redis; o motivo do descarte é só o tipo do erro.
+- **`com_retentativa` ganhou `prazo_total`**, para tempo-limite longo não se multiplicar.
+- **Inferência e worker sem `/docs`**, e tudo que não é `/saude` exige o token (Zero Trust).
+- Os `README.md` de espera de `inferencia/` e `worker/` saíram agora, não na F3.
+
+**Verificação:** `uv run pytest` com 131 testes passando, sem rede, Docker ou chave;
+`ruff check` e `pyright` sem apontamentos. **Ainda não verificado contra serviços reais:** o
+SQL só rodou com o pool substituído; o compose (Tarefas 3 e 4) é a primeira prova.
+
+**Revisão do advisor:** sem bloqueios; pediu o `.env.example` completo (15 variáveis
+faltavam) e a prova de ponta a ponta no banco real junto com o compose.
 
 <!--
 Modelo para as próximas etapas:
