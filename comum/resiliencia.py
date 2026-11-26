@@ -3,7 +3,8 @@ Retentativa com espera progressiva (backoff exponencial + jitter) - Aula 11.
 
 So retenta falhas TRANSITORIAS (tempo-limite, conexao recusada, HTTP 5xx e 429).
 Erros do cliente (4xx) nao melhoram tentando de novo, entao sobem na hora.
-Retentar a geracao e seguro porque ela nao tem efeito colateral (idempotente).
+Use apenas em operacoes idempotentes (inferencia, busca e geracao nao tem efeito colateral).
+O log registra so o tipo do erro: a mensagem pode conter dados da requisicao (LGPD).
 """
 import logging
 import random
@@ -28,9 +29,14 @@ def espera_backoff(tentativa: int, base: float) -> float:
     return base * 2 ** (tentativa - 1) + random.uniform(0, base)
 
 
-def com_retentativa(funcao, tentativas=3, base=0.5):
-    """Devolve uma versao de `funcao` que retenta falhas transitorias com backoff."""
+def com_retentativa(funcao, tentativas=3, base=0.5, prazo_total=None):
+    """Devolve uma versao de `funcao` que retenta falhas transitorias com backoff.
+
+    `prazo_total` (segundos) limita a sequencia inteira: nao comeca nova tentativa se a
+    espera ja ultrapassar o prazo.
+    """
     def envolvida(*args, **kwargs):
+        inicio = time.monotonic()
         for tentativa in range(1, tentativas + 1):
             try:
                 return funcao(*args, **kwargs)
@@ -38,7 +44,9 @@ def com_retentativa(funcao, tentativas=3, base=0.5):
                 if tentativa == tentativas or not eh_transitoria(erro):
                     raise
                 espera = espera_backoff(tentativa, base)
+                if prazo_total is not None and time.monotonic() - inicio + espera >= prazo_total:
+                    raise
                 log.warning("tentativa %d/%d falhou (%s); nova tentativa em %.2fs",
-                            tentativa, tentativas, erro, espera)
+                            tentativa, tentativas, type(erro).__name__, espera)
                 time.sleep(espera)
     return envolvida
