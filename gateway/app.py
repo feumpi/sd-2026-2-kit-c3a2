@@ -1,6 +1,7 @@
 """
 API Gateway - porta de entrada unica da plataforma (Aula 8).
 
+  POST /login          emite o token JWT (as rotas abaixo, menos /saude, o exigem)
   POST /predict        sentimento (sincrono, via inferencia)
   POST /documentos     indexacao assincrona: devolve 202 e o id da tarefa (via fila)
   GET  /tarefas/{id}   estado da tarefa
@@ -16,13 +17,13 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 import redis
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Path
 from fastapi.responses import RedirectResponse
 
 from comum import contrato, web
 from comum.modelos import Consulta, Documento, EntradaTexto
 from comum.observabilidade import injetar_contexto
-from gateway import inferencia
+from gateway import autenticacao, inferencia
 from gateway.despertar import despertar
 
 web.configurar_logs()
@@ -36,11 +37,14 @@ redis_cliente = contrato.conectar()
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI):
+    autenticacao.segredo()  # sem segredo forte o gateway nem sobe
     despertar(inferencia.URL_INFERENCIA, URL_WORKER)
     yield
 
 
 app = FastAPI(title="Plataforma de IA - Gateway C3.A2", lifespan=ciclo_de_vida)
+# toda rota de negocio entra neste roteador: nao ha como esquecer de proteger uma
+protegidas = APIRouter(dependencies=[Depends(autenticacao.exigir_usuario)])
 
 
 @app.get("/", include_in_schema=False)
@@ -53,12 +57,12 @@ def saude():
     return {"status": "ok"}
 
 
-@app.post("/predict")
+@protegidas.post("/predict")
 def predict(entrada: EntradaTexto):
     return inferencia.encaminhar("/predict", entrada.model_dump())
 
 
-@app.post("/documentos", status_code=202)
+@protegidas.post("/documentos", status_code=202)
 def enviar_documento(documento: Documento):
     """Enfileira o documento; acompanhe em GET /tarefas/{id}."""
     try:
@@ -72,7 +76,7 @@ def enviar_documento(documento: Documento):
             "acompanhar": f"/tarefas/{tarefa_id}"}
 
 
-@app.get("/tarefas/{tarefa_id}")
+@protegidas.get("/tarefas/{tarefa_id}")
 def consultar_tarefa(tarefa_id: Annotated[str, Path(max_length=64)]):
     try:
         dados = contrato.consultar_tarefa(redis_cliente, tarefa_id)
@@ -86,14 +90,16 @@ def consultar_tarefa(tarefa_id: Annotated[str, Path(max_length=64)]):
     return {"id": tarefa_id, **dados}
 
 
-@app.post("/buscar")
+@protegidas.post("/buscar")
 def buscar(consulta: Consulta):
     return inferencia.encaminhar("/buscar", consulta.model_dump())
 
 
-@app.post("/perguntar")
+@protegidas.post("/perguntar")
 def perguntar(consulta: Consulta):
     return inferencia.encaminhar("/perguntar", consulta.model_dump())
 
 
+app.include_router(autenticacao.roteador)
+app.include_router(protegidas)
 web.registrar_requisicoes(app)

@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from comum import contrato
 from gateway import app as gateway
-from gateway import despertar, inferencia
+from gateway import autenticacao, despertar, inferencia
 
 
 def resposta_http(codigo, corpo=None, cabecalhos=None):
@@ -44,9 +44,15 @@ def remoto(monkeypatch):
     return estado
 
 
+def autorizado() -> TestClient:
+    """Cliente com um token valido."""
+    token = autenticacao.emitir_token("usuario-teste")
+    return TestClient(gateway.app, headers={"Authorization": f"Bearer {token}"})
+
+
 @pytest.fixture
 def cliente(r):
-    return TestClient(gateway.app)
+    return autorizado()
 
 
 def test_raiz_redireciona_para_a_documentacao(cliente):
@@ -133,7 +139,7 @@ def test_fila_fora_do_ar_da_503(monkeypatch, metodo, rota, corpo):
 
     monkeypatch.setattr(gateway, "redis_cliente", RedisFora())
     argumentos = {"json": corpo} if corpo else {}
-    r = getattr(TestClient(gateway.app), metodo)(rota, **argumentos)
+    r = getattr(autorizado(), metodo)(rota, **argumentos)
     assert r.status_code == 503 and "senha" not in r.text
     assert "Retry-After" in r.headers
 
