@@ -10,10 +10,12 @@ Contra o ambiente publicado:
 O arquivo de credenciais tem linhas USUARIO_DEMO=... e SENHA_DEMO=... e fica fora do
 repositorio. Sem ele valem E2E_USUARIO/E2E_SENHA ou os padroes do compose local.
 """
+import json
 import os
 import subprocess
 import time
 import uuid
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -152,6 +154,53 @@ def compose(*argumentos) -> str:
 
 def mortas() -> int:
     return int(compose("exec", "-T", "redis", "redis-cli", "llen", "fila:tarefas:dlq"))
+
+
+JAEGER = os.getenv("URL_JAEGER", "http://localhost:16686")
+
+
+def spans_da_tarefa(tarefa_id: str) -> list:
+    """Spans (API v3 do Jaeger, formato OTLP) dos traces que citam a tarefa."""
+    agora = datetime.now(UTC)
+    resposta = requests.get(f"{JAEGER}/api/v3/traces", timeout=10, params={
+        "query.service_name": "gateway",
+        "query.attributes": json.dumps({"tarefa.id": tarefa_id}),
+        "query.start_time_min": (agora - timedelta(hours=1)).isoformat(),
+        "query.start_time_max": (agora + timedelta(minutes=1)).isoformat()})
+    if resposta.status_code == 404:  # nada encontrado ainda
+        return []
+    resposta.raise_for_status()
+    spans = []
+    for recurso in resposta.json()["result"].get("resourceSpans", []):
+        atributos = {a["key"]: a["value"] for a in recurso["resource"]["attributes"]}
+        servico = atributos["service.name"]["stringValue"]
+        for escopo in recurso["scopeSpans"]:
+            spans += [{**span, "servico": servico} for span in escopo["spans"]]
+    return spans
+
+
+@pytest.mark.skipif(not LOCAL, reason="consulta o Jaeger do compose")
+def test_um_trace_unico_vai_do_gateway_ao_banco(cliente):
+    marca = uuid.uuid4().hex[:12]
+    envio = cliente.post(f"{BASE}/documentos", timeout=TEMPO_LIMITE,
+                         json={"texto": f"documento rastreado {marca}", "origem": marca}).json()
+    assert esperar(lambda: terminada(cliente, envio["acompanhar"]))["estado"] == "concluida"
+
+    def completo():
+        spans = spans_da_tarefa(envio["id"])
+        no_banco = any(s["servico"] == "worker" and s["name"] == "INSERT" for s in spans)
+        servicos = {s["servico"] for s in spans}
+        return spans if no_banco and {"gateway", "worker", "inferencia"} <= servicos else None
+
+    spans = esperar(completo, segundos=40)
+    assert len({s["traceId"] for s in spans}) == 1
+    nomes = {s["name"] for s in spans}
+    assert {"POST /documentos", "publicar fila:tarefas", "processar fila:tarefas",
+            "POST /processar", "INSERT"} <= nomes
+    exportado = json.dumps(spans)
+    for proibido in (f"documento rastreado {marca}", "net.peer.ip", "client.address",
+                     "user_agent"):
+        assert proibido not in exportado
 
 
 @pytest.mark.skipif(not LOCAL, reason="derruba containers: so no compose local")
