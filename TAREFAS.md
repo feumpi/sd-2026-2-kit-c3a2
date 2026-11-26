@@ -67,23 +67,23 @@ Detalhes no `CLAUDE.md` de cada diretório.
       `/perguntar`, `/saude`, `/`
 - **Aceite:** testes unitários de cada serviço passam sem rede, Docker ou chave de API.
 
-### [ ] 1. Autenticacao JWT no gateway (R6) - `gateway/`
+### [x] 1. Autenticacao JWT no gateway (R6) - `gateway/`
 
 Rota de login que emite o token e protecao das demais rotas (401 sem token). (Aula 16)
 
-- [ ] `POST /login` emite JWT com expiração; credenciais vindas de variável de ambiente
-- [ ] Todas as rotas de negócio exigem token; só `/`, `/saude`, `/login` e a documentação são abertas
-- [ ] Inferência e worker recusam chamadas sem o token interno
+- [x] `POST /login` emite JWT com expiração; credenciais vindas de variável de ambiente
+- [x] Todas as rotas de negócio exigem token; só `/`, `/saude`, `/login` e a documentação são abertas
+- [x] Inferência e worker recusam chamadas sem o token interno
 - **Aceite:** testes de 401 (sem token, inválido, expirado) e de 200 com token válido.
 
-### [ ] 2. Rate limit no gateway - `gateway/`
+### [x] 2. Rate limit no gateway - `gateway/`
 
 Limitar requisicoes por cliente por minuto. (Aula 8)
 
 Não consta no edital nem na rubrica. Implementado por decisão do usuário (26/11/2026),
 por ser núcleo do kit do professor.
 
-- [ ] Limite por cliente por minuto no Redis; 429 com `Retry-After`; IP nunca gravado em claro
+- [x] Limite por cliente por minuto no Redis; 429 com `Retry-After`; IP nunca gravado em claro
 - **Aceite:** testes de 429 ao estourar o limite e de liberação na janela seguinte.
 
 ### [x] 3. Dockerfile de cada servico (R3)

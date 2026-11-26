@@ -10,7 +10,8 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | Fase 0 — Ambiente | concluída e validada em 26/11/2026 |
 | F1 Base da arquitetura | concluída em 26/11/2026 |
 | 3 Dockerfiles e 4 Compose | concluídas em 26/11/2026 |
-| 1, 2, 5 a 10 (kit) | pendentes |
+| 1 JWT e 2 Rate limit | concluídas em 26/11/2026 |
+| 5 a 10 (kit) | pendentes |
 | F2 README e F3 Verificação final | pendentes |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
@@ -230,6 +231,35 @@ Memória em repouso: inferência 112 MB, worker 60 MB, vetorial 57 MB, gateway 5
 
 **Revisão do advisor:** sem bloqueios; pediu o registro do commit misturado, do Jaeger sem
 healthcheck e das medidas de memória.
+
+## Tarefas 1 e 2 — JWT e rate limit (26/11/2026)
+
+**O que foi feito:** `POST /login` com JWT HS256 e expiração; rotas de negócio num roteador
+que exige token e conta no limite; rate limit de janela fixa no Redis.
+
+**Decisões e justificativas (Aulas 8 e 16):**
+
+- **Falha fechada:** segredo com menos de 32 bytes impede a subida; sem `USUARIO_DEMO` ou
+  `SENHA_DEMO` todo login é recusado. Assim um deploy ainda sem as variáveis não fica aberto.
+- Proteção por roteador, não rota a rota, para não existir rota de negócio esquecida.
+- 401 montado pela aplicação (`auto_error=False`), com `WWW-Authenticate: Bearer`.
+- Chave do limite é um **HMAC** com o segredo, tanto para o usuário quanto para o IP, com TTL
+  de 60 s: um hash simples de IPv4 seria revertido por força bruta. É pseudonimização, não
+  anonimização, e entra na tabela da LGPD.
+- Redis fora do ar libera a requisição (disponibilidade), com aviso no log.
+- **IP atrás de proxy — não confirmado.** Não há documentação oficial do Render para web
+  services. Um [artigo do Render sobre proxy](https://render.com/articles/how-to-proxy-analytics-through-your-own-domain),
+  testado num site estático, mostra o IP também em `CF-Connecting-IP` e `True-Client-IP`, e
+  não diz se o cliente consegue forjá-los. Por isso a origem é configurável
+  (`CABECALHO_IP_CLIENTE` ou `PROXIES_CONFIAVEIS`, lido da direita) e o padrão é o endereço da
+  conexão: na nuvem o login provavelmente cai numa cota única, mas não pode ser burlado.
+
+**Verificação:** 172 testes unitários; no compose, e2e com login passando, rotas sem token 401,
+inferência e worker 401 sem o token interno, 70 logins com `X-Forwarded-For` forjado
+estourando o limite (429 com `Retry-After`) e chaves no Redis contendo só HMAC.
+
+**Revisão do advisor:** sem bloqueios; pediu o registro do IP como não confirmado e apontou
+para a Tarefa 6 que `prazo_total` ainda não limitava a duração de cada tentativa.
 
 <!--
 Modelo para as próximas etapas:
