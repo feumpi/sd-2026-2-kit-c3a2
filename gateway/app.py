@@ -2,6 +2,7 @@
 API Gateway - porta de entrada unica da plataforma (Aula 8).
 
   POST /login          emite o token JWT (as rotas abaixo, menos /saude, o exigem)
+                       (login limitado por IP; rotas protegidas, por usuario: 429)
   POST /predict        sentimento (sincrono, via inferencia)
   POST /documentos     indexacao assincrona: devolve 202 e o id da tarefa (via fila)
   GET  /tarefas/{id}   estado da tarefa
@@ -23,7 +24,7 @@ from fastapi.responses import RedirectResponse
 from comum import contrato, web
 from comum.modelos import Consulta, Documento, EntradaTexto
 from comum.observabilidade import injetar_contexto
-from gateway import autenticacao, inferencia
+from gateway import autenticacao, inferencia, limite
 from gateway.despertar import despertar
 
 web.configurar_logs()
@@ -43,8 +44,9 @@ async def ciclo_de_vida(app: FastAPI):
 
 
 app = FastAPI(title="Plataforma de IA - Gateway C3.A2", lifespan=ciclo_de_vida)
-# toda rota de negocio entra neste roteador: nao ha como esquecer de proteger uma
-protegidas = APIRouter(dependencies=[Depends(autenticacao.exigir_usuario)])
+app.state.redis = lambda: redis_cliente  # lido a cada uso: os testes trocam o cliente
+# toda rota de negocio entra neste roteador: exige token e conta no limite do usuario
+protegidas = APIRouter(dependencies=[Depends(limite.limitar_usuario)])
 
 
 @app.get("/", include_in_schema=False)
@@ -100,6 +102,6 @@ def perguntar(consulta: Consulta):
     return inferencia.encaminhar("/perguntar", consulta.model_dump())
 
 
-app.include_router(autenticacao.roteador)
+app.include_router(autenticacao.roteador, dependencies=[Depends(limite.limitar_endereco)])
 app.include_router(protegidas)
 web.registrar_requisicoes(app)
