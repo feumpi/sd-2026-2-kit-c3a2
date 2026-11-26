@@ -434,6 +434,16 @@ apontamentos, nenhum dado pessoal nos logs. Antes da correção, um clone limpo 
 **Revisão do advisor:** apontou que o despertar só pode partir do cliente, que o ajuste antes
 sugerido (`URL_WORKER`) não acordaria o worker, e propôs a página no gateway.
 
+## F3 — Verificação final (26/11/2026)
+
+- Clone limpo do GitHub (commit `e0ac1d2`), sem `.env`, construído sem cache e no ar em 41 s com
+  um comando: 200 unitários, `ruff` limpo, 13 e2e e os exemplos do README.
+- Busca no histórico: sem o usuário, a senha publicados ou chave do Honeycomb.
+- `referencia/` removida. Os excludes dela no `pyproject.toml` ficaram, porque alterar esse
+  arquivo republicaria os três serviços.
+- Falta ao usuário: enviar as credenciais ao professor por e-mail e postar no AVA somente o link
+  do repositório.
+
 <!--
 Modelo para as próximas etapas:
 

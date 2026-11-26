@@ -170,14 +170,14 @@ CAP, custo e latencia do seu sistema.
 ### [ ] F3. Verificação final e entrega (R9)
 
 - [x] Remover `referencia/` e os `README.md` de espera em `inferencia/` e `worker/`
-- [ ] Clone em OUTRA máquina (ou diretório limpo) e rode o comando unico seguindo só o README
+- [x] Clone em OUTRA máquina (ou diretório limpo) e rode o comando unico seguindo só o README
 - [x] A URL publica esta no ar?
 - [ ] Usuário confirmou o envio das credenciais ao professor por e-mail
 - [x] Toda configuracao esta em variavel de ambiente (nada fixo no codigo)?
 - [x] Os logs estao livres de dados pessoais?
-- [ ] `uv run pytest`, `uv run pytest -m e2e` e `uv run ruff check .` verdes
-- [ ] Commits enviados ao GitHub
-- [ ] Lembrar o usuário de postar **apenas o link do repositório** no AVA
+- [x] `uv run pytest`, `uv run pytest -m e2e` e `uv run ruff check .` verdes
+- [x] Commits enviados ao GitHub
+- [x] Lembrar o usuário de postar **apenas o link do repositório** no AVA
 
 ## Extensoes opcionais (R8) - DISPENSADAS
 
