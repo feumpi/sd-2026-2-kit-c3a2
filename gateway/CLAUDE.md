@@ -53,3 +53,6 @@ durante o despertar e ainda abririam o disjuntor, justamente na primeira requisi
 for avaliar. Na nuvem, use um valor que cubra o cold start (da ordem de 75 a 90 s, conforme o
 medido) e confira o comportamento depois de 15+ min ociosos. Tempo-limite longo multiplicado
 por 3 retentativas deixaria o cliente esperando vários minutos: limite o tempo total.
+
+**Observado no deploy:** o `GET /saude` vindo do gateway não acordou serviço adormecido; só o
+acesso externo acordou. Por isso `GET /` publicado serve a página de `pagina.py`.

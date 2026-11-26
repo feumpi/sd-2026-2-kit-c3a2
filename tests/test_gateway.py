@@ -56,9 +56,21 @@ def cliente(r):
     return autorizado()
 
 
-def test_raiz_redireciona_para_a_documentacao(cliente):
+def test_raiz_redireciona_para_a_documentacao(cliente, monkeypatch):
+    monkeypatch.setattr(inferencia, "URL_INFERENCIA", "http://inferencia:8001")
+    monkeypatch.setattr(gateway, "URL_WORKER", "http://worker:8002")
     r = cliente.get("/", follow_redirects=False)
     assert r.status_code in (302, 307) and r.headers["location"] == "/docs"
+
+
+def test_raiz_publicada_acorda_os_outros_servicos_pelo_navegador(cliente, monkeypatch):
+    monkeypatch.setattr(inferencia, "URL_INFERENCIA", "https://inferencia.exemplo/")
+    monkeypatch.setattr(gateway, "URL_WORKER", "https://worker.exemplo")
+    r = cliente.get("/", follow_redirects=False)
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
+    for servico in ("inferencia", "worker"):
+        assert f'<iframe src="https://{servico}.exemplo/saude"' in r.text
+    assert 'href="/docs"' in r.text and "token-interno" not in r.text
 
 
 def test_saude_nao_depende_de_ninguem(monkeypatch):

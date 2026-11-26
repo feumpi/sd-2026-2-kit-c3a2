@@ -19,11 +19,11 @@ from typing import Annotated
 
 import redis
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Path
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from comum import contrato, observabilidade, web
 from comum.modelos import Consulta, Documento, EntradaTexto
-from gateway import autenticacao, inferencia, limite
+from gateway import autenticacao, inferencia, limite, pagina
 from gateway.despertar import despertar
 
 web.configurar_logs()
@@ -51,7 +51,9 @@ protegidas = APIRouter(dependencies=[Depends(limite.limitar_usuario)])
 
 @app.get("/", include_in_schema=False)
 def inicio():
-    return RedirectResponse("/docs")
+    """Documentacao; na nuvem, antes passa pela pagina que acorda os outros servicos."""
+    html = pagina.montar((inferencia.URL_INFERENCIA, URL_WORKER))
+    return HTMLResponse(html) if html else RedirectResponse("/docs")
 
 
 @app.get("/saude")

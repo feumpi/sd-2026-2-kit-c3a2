@@ -3,6 +3,9 @@ Acorda os servicos que dormem no plano gratuito (cold start).
 
 Dispara um GET /saude em segundo plano, sem atrasar a resposta ao cliente, e no maximo uma
 vez a cada INTERVALO por servico. Nao e um ping periodico para manter servicos acordados.
+
+No ambiente publicado isto mantem ativo um servico ja acordado, mas nao acordou um
+adormecido; quem acorda e o acesso externo (ver pagina.py).
 """
 import os
 import threading
