@@ -1,35 +1,51 @@
 """
-API Gateway - porta de entrada unica da plataforma.
+API Gateway - porta de entrada unica da plataforma (Aula 8).
 
-JA PRONTO: roteamento para o servico de inferencia e log de requisicoes.
-TAREFA 1: autenticacao por JWT.
-TAREFA 2: limite de requisicoes por cliente (rate limit).
+  POST /predict        sentimento (sincrono, via inferencia)
+  POST /documentos     indexacao assincrona: devolve 202 e o id da tarefa (via fila)
+  GET  /tarefas/{id}   estado da tarefa
+  POST /buscar         documentos mais parecidos com a pergunta
+  POST /perguntar      resposta fundamentada nos documentos (RAG)
+  GET  /saude          estado do gateway, sem depender de outros servicos
 
-Rodar: uvicorn app:app --port 8000
+Rodar: uvicorn gateway.app:app --port 8000 --no-access-log
 """
+import logging
 import os
-import time
+from contextlib import asynccontextmanager
+from typing import Annotated
 
-import requests
-from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel
+import redis
+from fastapi import FastAPI, HTTPException, Path
+from fastapi.responses import RedirectResponse
 
-app = FastAPI(title="Gateway - C3.A2")
-URL_INFERENCIA = os.getenv("URL_INFERENCIA", "http://localhost:8001")
+from comum import contrato, web
+from comum.modelos import Consulta, Documento, EntradaTexto
+from comum.observabilidade import injetar_contexto
+from gateway import inferencia
+from gateway.despertar import despertar
+
+web.configurar_logs()
+log = logging.getLogger("gateway")
+
+URL_WORKER = os.getenv("URL_WORKER", "http://worker:8002")
+FILA_FORA = "fila de tarefas indisponivel; tente novamente em instantes"
+
+redis_cliente = contrato.conectar()
 
 
-class Entrada(BaseModel):
-    texto: str
+@asynccontextmanager
+async def ciclo_de_vida(app: FastAPI):
+    despertar(inferencia.URL_INFERENCIA, URL_WORKER)
+    yield
 
 
-@app.middleware("http")
-async def registrar(request: Request, call_next):
-    inicio = time.time()
-    resposta = await call_next(request)
-    ms = (time.time() - inicio) * 1000
-    print(f"[gateway] {request.method} {request.url.path} "
-          f"-> {resposta.status_code} ({ms:.1f}ms)")
-    return resposta
+app = FastAPI(title="Plataforma de IA - Gateway C3.A2", lifespan=ciclo_de_vida)
+
+
+@app.get("/", include_in_schema=False)
+def inicio():
+    return RedirectResponse("/docs")
 
 
 @app.get("/saude")
@@ -38,19 +54,46 @@ def saude():
 
 
 @app.post("/predict")
-def predict(entrada: Entrada):
-    # TAREFA 1: exigir um token JWT valido aqui (401 se ausente/invalido).
-    # TAREFA 2: aplicar limite de requisicoes por cliente.
+def predict(entrada: EntradaTexto):
+    return inferencia.encaminhar("/predict", entrada.model_dump())
+
+
+@app.post("/documentos", status_code=202)
+def enviar_documento(documento: Documento):
+    """Enfileira o documento; acompanhe em GET /tarefas/{id}."""
     try:
-        r = requests.post(f"{URL_INFERENCIA}/predict",
-                          json=entrada.model_dump(), timeout=10)
-        r.raise_for_status()
-        return r.json()
-    except requests.RequestException as e:
-        raise HTTPException(status_code=503,
-                            detail=f"servico de inferencia indisponivel: {e}")
+        tarefa_id = contrato.enfileirar(redis_cliente, documento.model_dump(),
+                                        injetar_contexto())
+    except redis.RedisError as erro:
+        log.warning("fila indisponivel: %s", type(erro).__name__)
+        return web.indisponivel(FILA_FORA)
+    despertar(URL_WORKER)
+    return {"id": tarefa_id, "estado": contrato.PENDENTE,
+            "acompanhar": f"/tarefas/{tarefa_id}"}
 
 
-# TAREFA 1 (continuacao): rota de login que emite o token.
-# @app.post("/login")
-# def login(...): ...
+@app.get("/tarefas/{tarefa_id}")
+def consultar_tarefa(tarefa_id: Annotated[str, Path(max_length=64)]):
+    try:
+        dados = contrato.consultar_tarefa(redis_cliente, tarefa_id)
+    except redis.RedisError as erro:
+        log.warning("fila indisponivel: %s", type(erro).__name__)
+        return web.indisponivel(FILA_FORA)
+    if dados is None:
+        raise HTTPException(404, "tarefa inexistente ou expirada")
+    if dados.get("estado") == contrato.PENDENTE:
+        despertar(URL_WORKER)  # sem trafego o worker dorme e a fila acumula
+    return {"id": tarefa_id, **dados}
+
+
+@app.post("/buscar")
+def buscar(consulta: Consulta):
+    return inferencia.encaminhar("/buscar", consulta.model_dump())
+
+
+@app.post("/perguntar")
+def perguntar(consulta: Consulta):
+    return inferencia.encaminhar("/perguntar", consulta.model_dump())
+
+
+web.registrar_requisicoes(app)
