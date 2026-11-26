@@ -66,3 +66,10 @@ extend-exclude = ["referencia"]
 [tool.ruff.lint]
 # explicito para o resultado nao depender de configuracao do usuario nem da versao do ruff
 select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pyright]
+# aponta o LSP para o ambiente do uv
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+exclude = ["referencia", ".venv", "**/__pycache__"]
