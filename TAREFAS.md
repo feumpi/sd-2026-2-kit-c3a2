@@ -44,7 +44,7 @@ gateway nunca ficar público sem autenticação e haver uma única parada para o
 - [x] GitHub conectado ao Render, com o app instalado no repositório (confirmado pelo usuário;
       verificado de fato ao criar o Blueprint)
 - [x] Conta no [Honeycomb](https://ui.honeycomb.io), região US
-- [ ] Na Tarefa 5, quando o Blueprint mostrar os campos no painel: criar a **Ingest API key** do
+- [x] Na Tarefa 5, quando o Blueprint mostrar os campos no painel: criar a **Ingest API key** do
       Honeycomb e preenchê-la (decisão do usuário: não criar antes)
 - [ ] Depois do deploy, enviar usuário e senha do ambiente publicado ao professor por e-mail
 
@@ -125,7 +125,7 @@ Tempo-limite, retentativa com espera progressiva e circuit breaker. (Aula 11)
 - **Aceite:** testes automatizados e teste manual `docker compose stop inferencia`
   (503 elegante, disjuntor abre, fila se recupera ao religar).
 
-### [ ] 7. Observabilidade (R5)
+### [x] 7. Observabilidade (R5)
 
 Rastreamento distribuido cobrindo gateway -> fila -> worker. (Aula 15)
 
@@ -134,8 +134,7 @@ Rastreamento distribuido cobrindo gateway -> fila -> worker. (Aula 15)
 - [x] `trace_id` nos logs; nenhum dado pessoal em spans ou logs
 - **Aceite:** um único trace no Jaeger com gateway → fila → worker → inferência → banco;
   o mesmo no Honeycomb para o ambiente publicado.
-- Verificado no Jaeger local; **a parte do Honeycomb fica pendente até o deploy** (Tarefa 5),
-  por isso a tarefa só é marcada depois dele.
+- Verificado no Jaeger local e, em 26/11/2026, no Honeycomb com o ambiente publicado.
 
 ### [x] 8. HTTPS no servico publicado. (R6) (Aula 16)
 

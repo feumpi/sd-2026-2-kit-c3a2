@@ -157,6 +157,10 @@ traz o `trace_id`.
 
 ![Trace único no Jaeger](docs/imagens/trace-jaeger.png)
 
+O mesmo no ambiente publicado, no Honeycomb:
+
+![Trace único no Honeycomb](docs/imagens/trace-honeycomb.jpg)
+
 ## Segurança
 
 - **JWT** (HS256, com expiração) em todas as rotas de negócio. O gateway não sobe sem um segredo

@@ -369,6 +369,28 @@ dependem de valores que só o usuário digita no painel.
 **Revisão do advisor:** identificou a referência entre serviços como causa provável do
 travamento; depois, pediu para publicar a documentação já e concluir a Tarefa 8.
 
+## Tarefas 5 e 7 — Variáveis do painel e verificação (26/11/2026)
+
+**Problema encontrado:** `USUARIO_DEMO`, `SENHA_DEMO` e `OTEL_EXPORTER_OTLP_HEADERS` não
+existiam nos serviços, embora tivessem sido preenchidos na tela do Blueprint. Isso explica os
+dois 401 (login e Honeycomb). A relação com a sincronização travada é uma hipótese, não
+verificada. O usuário criou as variáveis em cada serviço. O gateway se comportou como
+projetado: sem credenciais configuradas, recusou todo login.
+
+**Verificação no ambiente publicado:**
+
+- `uv run pytest -m e2e` com `URL_BASE`: 11 passaram e 2 foram pulados (exigem o compose).
+- Nenhum erro de exportação nos logs depois do novo deploy.
+- Logs de execução dos três serviços (cerca de 750 linhas, comparação automática sem exibir
+  valores): sem usuário, senha, textos enviados, pergunta, token, chave ou IP.
+- Honeycomb: um único trace com 6 spans, `POST /documentos` → `publicar` → `processar` →
+  `POST /processar` → `INSERT`. O `db.statement` traz os marcadores `%s`; o span do gateway não
+  tem IP do cliente nem agente do usuário. Um primeiro trace aparecia sem a raiz porque o
+  cliente dos testes, instrumentado no mesmo processo, enviava o próprio `traceparent`; um envio
+  por cliente sem instrumentação mostrou o trace completo.
+
+![Trace único no Honeycomb](imagens/trace-honeycomb.jpg)
+
 <!--
 Modelo para as próximas etapas:
 

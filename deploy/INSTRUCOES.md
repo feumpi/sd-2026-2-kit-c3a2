@@ -25,6 +25,9 @@ todos no plano `free`.
    | `OTEL_EXPORTER_OTLP_HEADERS` | gateway, inferência e worker | `x-honeycomb-team=<chave>` |
 
 4. **Apply.** `JWT_SEGREDO` e `TOKEN_INTERNO` são gerados pelo Render.
+   Depois, confira em **Environment** de cada serviço se as variáveis do passo 3 existem. No
+   primeiro deploy deste projeto, em que a sincronização travou e foi substituída, elas ficaram
+   ausentes e precisaram ser criadas à mão (**Save and deploy**). Sem elas o login responde 401.
 5. Cada `push` na `main` republica os serviços afetados (`buildFilter`; arquivos `.md` não
    disparam *build*).
 
