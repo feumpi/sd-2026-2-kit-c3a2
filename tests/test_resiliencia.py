@@ -99,3 +99,18 @@ def test_log_nao_repete_a_mensagem_do_erro(relogio, caplog):
     com_retentativa(funcao)()
     assert "ConnectionError" in caplog.text
     assert "segredo" not in caplog.text
+
+
+def test_tempo_limite_de_cada_tentativa_cabe_no_que_resta_do_prazo(relogio):
+    limites = []
+
+    def lenta(tempo_limite):
+        limites.append(tempo_limite)
+        relogio.agora += tempo_limite  # consome todo o tempo da tentativa
+        raise requests.Timeout()
+
+    with pytest.raises(requests.Timeout):
+        com_retentativa(lenta, tentativas=5, base=1, prazo_total=15, tempo_limite=10)()
+    # 10 s + 1 s de espera + o que resta (4 s)
+    assert limites == [10, 4]
+    assert relogio.agora == 15

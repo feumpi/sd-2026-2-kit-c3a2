@@ -21,7 +21,7 @@ class CircuitoAberto(Exception):
 
 class CircuitBreaker:
 
-    def __init__(self, limite_falhas=5, espera_segundos=30):
+    def __init__(self, limite_falhas: int = 5, espera_segundos: float = 30):
         self.limite_falhas = limite_falhas
         self.espera_segundos = espera_segundos
         self.falhas = 0

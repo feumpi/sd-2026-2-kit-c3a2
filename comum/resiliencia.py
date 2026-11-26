@@ -29,15 +29,22 @@ def espera_backoff(tentativa: int, base: float) -> float:
     return base * 2 ** (tentativa - 1) + random.uniform(0, base)
 
 
-def com_retentativa(funcao, tentativas=3, base=0.5, prazo_total=None):
+def com_retentativa(funcao, tentativas=3, base=0.5, prazo_total=None, tempo_limite=None):
     """Devolve uma versao de `funcao` que retenta falhas transitorias com backoff.
 
     `prazo_total` (segundos) limita a sequencia inteira: nao comeca nova tentativa se a
-    espera ja ultrapassar o prazo.
+    espera ja ultrapassar o prazo. Com `tempo_limite`, a funcao recebe o argumento
+    `tempo_limite` de cada tentativa, encurtado para nao passar do que resta do prazo.
     """
     def envolvida(*args, **kwargs):
         inicio = time.monotonic()
         for tentativa in range(1, tentativas + 1):
+            if tempo_limite is not None:
+                limite = tempo_limite
+                if prazo_total is not None:
+                    restante = prazo_total - (time.monotonic() - inicio)
+                    limite = max(0.1, min(tempo_limite, restante))
+                kwargs["tempo_limite"] = limite
             try:
                 return funcao(*args, **kwargs)
             except Exception as erro:
@@ -49,4 +56,5 @@ def com_retentativa(funcao, tentativas=3, base=0.5, prazo_total=None):
                 log.warning("tentativa %d/%d falhou (%s); nova tentativa em %.2fs",
                             tentativa, tentativas, type(erro).__name__, espera)
                 time.sleep(espera)
+        raise ValueError("tentativas precisa ser ao menos 1")
     return envolvida
