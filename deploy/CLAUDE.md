@@ -51,7 +51,7 @@ Fatos conferidos na documentação do Render em 26/11/2026 (reconfira se algo di
 - A aplicação escuta em `0.0.0.0:$PORT` (padrão 10000). TLS automático e redirecionamento de
   HTTP para HTTPS.
 - Minutos de build são limitados e, sem cartão cadastrado, estourar **desativa novos builds
-  até o fim do mês**. O rascunho usa `buildFilter` por serviço; ainda assim, agrupe os pushes
+  até o fim do mês**. O rascunho usa `buildFilter` por serviço e ignora `*.md`; ainda assim, agrupe os pushes
   depois que o deploy estiver no ar.
 - Banda de saída também é limitada; sem cartão, estourar suspende os serviços gratuitos.
 - A documentação avisa que alto volume de tráfego iniciado pelo serviço pode suspendê-lo:
@@ -74,7 +74,7 @@ rede privada. Mova o arquivo para `./render.yaml`, ajuste ao código e valide de
 3. Preencher no painel as variáveis `sync: false`:
    - `OTEL_EXPORTER_OTLP_HEADERS` = `x-honeycomb-team=<chave>` (o par chave=valor, não só a
      chave), nos três serviços. Use uma **Ingest key**.
-   - `SENHA_DEMO`: senha forte e exclusiva.
+   - `USUARIO_DEMO` e `SENHA_DEMO` (senha forte e exclusiva), no gateway.
 
    O usuário digita os segredos no painel; não peça que os cole no chat nem os grave no
    repositório.

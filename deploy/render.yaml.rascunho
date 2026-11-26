@@ -34,6 +34,7 @@ services:
     healthCheckPath: /saude
     buildFilter:
       paths: [inferencia/**, comum/**, vetorial/**, pyproject.toml, uv.lock]
+      ignoredPaths: ["**/*.md"]
     envVars:
       - fromGroup: c3a2-interno
       - key: DATABASE_URL
@@ -55,6 +56,7 @@ services:
     healthCheckPath: /saude
     buildFilter:
       paths: [worker/**, comum/**, vetorial/**, pyproject.toml, uv.lock]
+      ignoredPaths: ["**/*.md"]
     envVars:
       - fromGroup: c3a2-interno
       - key: DATABASE_URL
@@ -82,12 +84,13 @@ services:
     healthCheckPath: /saude
     buildFilter:
       paths: [gateway/**, comum/**, pyproject.toml, uv.lock]
+      ignoredPaths: ["**/*.md"]
     envVars:
       - fromGroup: c3a2-interno
       - key: JWT_SEGREDO
         generateValue: true
       - key: USUARIO_DEMO
-        value: professor
+        sync: false
       - key: SENHA_DEMO
         sync: false
       - key: REDIS_URL

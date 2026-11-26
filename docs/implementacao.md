@@ -129,6 +129,12 @@ a seção anterior menciona o Neon, vale esta decisão.
   validação verifica de fato. Comportamento em execução não verificado.
 - A conexão do GitHub ao Render exige consentimento no navegador e ficou com o usuário.
 
+### Revisão do advisor (continuação)
+
+- Edições nos guias disparariam builds: o `buildFilter` passou a ignorar `**/*.md`.
+- O usuário de demonstração estava fixo no rascunho do Blueprint, num repositório público:
+  passou a ser preenchido no painel (`sync: false`).
+
 <!--
 Modelo para as próximas etapas:
 
