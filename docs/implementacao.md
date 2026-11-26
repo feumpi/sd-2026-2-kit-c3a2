@@ -7,7 +7,7 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 
 | Etapa | Status |
 |-------|--------|
-| Fase 0 — Ambiente | concluída em 26/11/2026 (falta conectar o GitHub ao Render e criar a chave do Honeycomb) |
+| Fase 0 — Ambiente | concluída e validada em 26/11/2026 |
 | F1 Base da arquitetura | pendente |
 | 1 a 10 (kit) | pendentes |
 | F2 README e F3 Verificação final | pendentes |
@@ -134,6 +134,25 @@ a seção anterior menciona o Neon, vale esta decisão.
 - Edições nos guias disparariam builds: o `buildFilter` passou a ignorar `**/*.md`.
 - O usuário de demonstração estava fixo no rascunho do Blueprint, num repositório público:
   passou a ser preenchido no painel (`sync: false`).
+
+## Fase 0 — Validação de prontidão (26/11/2026)
+
+- **Decisões do usuário:** a chave do Honeycomb será criada só quando houver onde preenchê-la
+  no Render (Tarefa 5); `git push` autorizado ao fim de cada tarefa, mantida a confirmação
+  antes do primeiro deploy.
+- O usuário informou ter instalado o app do Render no repositório e adicionado a credencial do
+  GitHub. Não há como confirmar sem criar o Blueprint.
+- Plugin `render-visual-skill` (diagramas, sem relação com o Render.com) removido; fica o
+  oficial `render@claude-plugins-official`, com o MCP ainda sem autenticação.
+- **Clone limpo do GitHub:** `uv sync` ok; 19 testes passando; `ruff` (2 avisos) e `pyright`
+  (12 erros) só em arquivos importados; rascunho do Blueprint válido; `docker compose config`
+  aceita o compose do kit, que ainda não funciona; nenhum link relativo quebrado; âncoras do
+  ebook corretas.
+- **Máquina:** `uv`, `gh`, `render` e Docker operando, imagens base presentes. A porta 5432 está
+  ocupada por um Postgres do usuário, e os guias passaram a proibir o uso dela.
+- Acrescentados aos guias três riscos vistos na releitura: `psycopg` ausente na imagem do
+  gateway, `register_vector` antes de existir a extensão e tempo-limite longo somado a
+  retentativas.
 
 <!--
 Modelo para as próximas etapas:
