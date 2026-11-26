@@ -114,14 +114,14 @@ Publicar e informar a URL publica no README. (Aula 13)
 - **Aceite:** fluxo completo (login → documento → tarefa → busca → pergunta) na URL pública,
   inclusive depois de os serviços terem dormido.
 
-### [ ] 6. Resiliencia (R5)
+### [x] 6. Resiliencia (R5)
 
 Tempo-limite, retentativa com espera progressiva e circuit breaker. (Aula 11)
 
-- [ ] Tempo-limite em toda chamada de rede (HTTP, Redis, Postgres, LLM)
-- [ ] Retentativa com backoff e jitter só para falha transitória em operação idempotente
-- [ ] Circuit breaker nas chamadas gateway→inferência, worker→inferência e inferência→LLM
-- [ ] Falha transitória não manda mensagem à dead-letter durante o cold start
+- [x] Tempo-limite em toda chamada de rede (HTTP, Redis, Postgres, LLM)
+- [x] Retentativa com backoff e jitter só para falha transitória em operação idempotente
+- [x] Circuit breaker nas chamadas gateway→inferência, worker→inferência e inferência→LLM
+- [x] Falha transitória não manda mensagem à dead-letter durante o cold start
 - **Aceite:** testes automatizados e teste manual `docker compose stop inferencia`
   (503 elegante, disjuntor abre, fila se recupera ao religar).
 

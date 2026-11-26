@@ -11,7 +11,8 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | F1 Base da arquitetura | concluída em 26/11/2026 |
 | 3 Dockerfiles e 4 Compose | concluídas em 26/11/2026 |
 | 1 JWT e 2 Rate limit | concluídas em 26/11/2026 |
-| 5 a 10 (kit) | pendentes |
+| 6 Resiliência | concluída em 26/11/2026 |
+| 5, 7 a 10 (kit) | pendentes |
 | F2 README e F3 Verificação final | pendentes |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
@@ -260,6 +261,38 @@ estourando o limite (429 com `Retry-After`) e chaves no Redis contendo só HMAC.
 
 **Revisão do advisor:** sem bloqueios; pediu o registro do IP como não confirmado e apontou
 para a Tarefa 6 que `prazo_total` ainda não limitava a duração de cada tentativa.
+
+## Tarefa 6 — Resiliência (26/11/2026)
+
+**O que foi feito:** tempo-limite, retentativa e disjuntor nas chamadas gateway→inferência,
+worker→inferência e inferência→LLM; estado dos disjuntores nas rotas `/saude`.
+
+**Decisões e justificativas (Aula 11):**
+
+- Composição `disjuntor(retentativa(tentativa com tempo-limite))`: uma sequência esgotada
+  conta como **uma** falha.
+- `prazo_total` passou a limitar também a **duração** de cada tentativa: antes, com
+  tempo-limite de 90 s na nuvem, a sequência poderia chegar a 180 s.
+- **O que conta como falha:** erro de transporte, 5xx e 429. Um 4xx volta como resposta. No
+  gateway, o 503 **degradado** da inferência (banco ou LLM fora) também não conta: senão uma
+  queda do banco derrubaria o `/predict`, que não depende dele.
+- Orçamentos aninhados: o do LLM (`LLM_PRAZO_TOTAL`, 8 s) fica abaixo do tempo-limite do
+  gateway (10 s).
+- `llm.gerar` ganhou o parâmetro opcional `tempo_limite` (única mudança no cliente do kit).
+- No worker, circuito aberto é falha transitória e a espera é a que o disjuntor pede.
+- Sem disjuntor no banco: o pool já limita cada tentativa a `DB_TIMEOUT` (5 s).
+
+**Verificação no sistema rodando:**
+
+| Falha provocada | Observado |
+|-----------------|-----------|
+| `docker compose stop inferencia` | `/predict` 503 em cerca de 1,9 s nas três primeiras e em 6 ms com o circuito aberto; `/saude` mostra `aberto`; volta a 200 ao religar |
+| documento enviado durante a queda | 202; tarefa `pendente` com 0 tentativas, dead-letter intacta; concluída após religar |
+| `docker compose stop vetorial` | `/buscar` 503 degradado em 5 s; `/predict` segue 200 e o circuito do gateway fica fechado; busca volta sozinha ao religar |
+| LLM inacessível (`LLM_API_URL` inválida) | `/perguntar` 503 com trechos e fontes em cerca de 2 s e, com o circuito aberto, em 20 ms; `/predict` não é afetado |
+
+O teste `test_inferencia_fora_do_ar_degrada_e_depois_se_recupera` repete o primeiro cenário
+(e2e: 12 passando). Unitários: 185 passando.
 
 <!--
 Modelo para as próximas etapas:
