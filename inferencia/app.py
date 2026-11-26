@@ -18,7 +18,7 @@ from comum import web
 from comum.modelos import Consulta, EntradaTexto
 from inferencia import llm
 from inferencia.embeddings import Vetorizador
-from inferencia.modelo import carregar_modelo
+from inferencia.modelo import ModeloSentimento, carregar_modelo
 from vetorial.repositorio import BancoIndisponivel, EsquemaAusente, Repositorio
 
 web.configurar_logs()
@@ -26,7 +26,7 @@ log = logging.getLogger("inferencia")
 
 SEM_BASE = "Nao encontrei nos documentos indexados nada sobre essa pergunta."
 
-modelo = None
+modelo: ModeloSentimento | None = None
 vetorizador = Vetorizador()
 repositorio = Repositorio()
 
@@ -47,9 +47,14 @@ web.exigir_token_interno(app)
 web.registrar_requisicoes(app)
 
 
+def prever(texto: str) -> dict:
+    assert modelo is not None, "o modelo e carregado na subida"
+    return modelo.prever(texto)
+
+
 @app.post("/predict")
 def predict(entrada: EntradaTexto):
-    return modelo.prever(entrada.texto)
+    return prever(entrada.texto)
 
 
 @app.post("/processar")
@@ -58,7 +63,7 @@ def processar(entrada: EntradaTexto):
     if not any(vetor):
         # vetor zerado daria NaN na distancia do cosseno
         raise HTTPException(422, "texto sem palavras que possam ser indexadas")
-    resultado = modelo.prever(entrada.texto)
+    resultado = prever(entrada.texto)
     return {"sentimento": resultado["sentimento"], "confianca": resultado["confianca"],
             "vetor": vetor}
 

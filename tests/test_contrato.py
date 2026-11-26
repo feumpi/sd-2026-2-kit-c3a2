@@ -1,4 +1,5 @@
 """Testes do contrato da fila compartilhado por gateway e worker."""
+# pyright: reportOptionalSubscript=false
 import json
 
 import fakeredis

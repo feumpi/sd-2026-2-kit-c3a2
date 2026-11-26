@@ -1,4 +1,5 @@
 """Testes do worker: fila confiavel, dead-letter, falhas e retencao (sem Redis nem banco)."""
+# pyright: reportOptionalSubscript=false
 import json
 import logging
 import threading

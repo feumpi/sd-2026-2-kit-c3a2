@@ -9,6 +9,9 @@ Voce NAO precisa entender a matematica. Precisa saber:
   - vetorizar(texto) devolve uma lista de 512 numeros
   - texto sem nenhuma palavra devolve um vetor zerado (nao serve para comparar)
 """
+from typing import cast
+
+from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import HashingVectorizer
 
 DIMENSAO = 512
@@ -20,4 +23,5 @@ class Vetorizador:
         self._hashing = HashingVectorizer(n_features=DIMENSAO, ngram_range=(1, 2), norm="l2")
 
     def vetorizar(self, texto: str) -> list[float]:
-        return self._hashing.transform([texto]).toarray()[0].tolist()
+        matriz = cast(csr_matrix, self._hashing.transform([texto]))
+        return matriz.toarray()[0].tolist()

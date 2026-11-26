@@ -21,16 +21,12 @@ def _sem_nulo(valor: str) -> str:
     return valor
 
 
-def _texto(maximo: int):
-    return Annotated[
-        str,
-        StringConstraints(strip_whitespace=True, min_length=1, max_length=maximo),
-        AfterValidator(_sem_nulo),
-    ]
+def _limites(maximo: int) -> StringConstraints:
+    return StringConstraints(strip_whitespace=True, min_length=1, max_length=maximo)
 
 
-Texto = _texto(TEXTO_MAXIMO)
-Origem = _texto(200)
+Texto = Annotated[str, _limites(TEXTO_MAXIMO), AfterValidator(_sem_nulo)]
+Origem = Annotated[str, _limites(200), AfterValidator(_sem_nulo)]
 
 
 class EntradaTexto(BaseModel):
