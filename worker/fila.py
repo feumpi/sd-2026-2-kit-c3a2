@@ -1,51 +1,85 @@
 """
-Fila de ingestao no Redis - TAREFA 4 (Aula 8).
+Lado consumidor da fila (Aula 8). O contrato (chaves e mensagem) esta em comum/contrato.py.
 
-Produtor (rota POST /indexar) -> fila:ingestao -> consumidor (worker.py).
-
-  fila:ingestao              tarefas aguardando processamento
-  fila:ingestao:processando  tarefa que o worker pegou e ainda nao terminou
-  fila:ingestao:dlq          dead-letter: tarefas que falharam MAX_TENTATIVAS vezes
-  tarefa:{id}                hash com o estado da tarefa (pendente/concluida/falhou)
+Fila confiavel: a mensagem e movida atomicamente (BLMOVE) para a lista "processando" e so
+sai de la, na mesma transacao que grava o resultado, o reenfileiramento ou o descarte.
+Se o worker cair no meio, ela volta para a fila quando ele subir de novo.
+`recuperar_pendentes` pressupoe um unico worker.
 """
 import json
+import logging
 import os
 import time
-import uuid
+from typing import cast
 
-import redis
+from comum import contrato
 
-FILA = "fila:ingestao"
-PROCESSANDO = "fila:ingestao:processando"
-DLQ = "fila:ingestao:dlq"
-MAX_TENTATIVAS = int(os.getenv("INGESTAO_MAX_TENTATIVAS", "3"))
-VALIDADE_TAREFA = 24 * 60 * 60  # segundos que o estado da tarefa fica consultavel
+log = logging.getLogger("worker")
 
-
-def conectar() -> redis.Redis:
-    return redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-                                decode_responses=True, socket_timeout=10,
-                                socket_connect_timeout=5)
+# a dead-letter guarda o texto: o prazo dela tambem e limitado (LGPD)
+DLQ_RETENCAO = float(os.getenv("DLQ_RETENCAO_DIAS", "7")) * 24 * 60 * 60
 
 
-def chave_tarefa(tarefa_id: str) -> str:
-    return f"tarefa:{tarefa_id}"
+def retirar(r, espera: int) -> str | None:
+    """Proxima mensagem, ja registrada como em processamento; None se a fila ficou vazia."""
+    mensagem = r.blmove(contrato.FILA, contrato.PROCESSANDO, espera, "RIGHT", "LEFT")
+    if mensagem is not None:
+        r.expire(contrato.PROCESSANDO, contrato.VALIDADE_TAREFA)
+    return cast("str | None", mensagem)
 
 
-def atualizar_tarefa(r: redis.Redis, tarefa_id: str, **campos) -> None:
-    r.hset(chave_tarefa(tarefa_id), mapping={k: str(v) for k, v in campos.items()})
-    r.expire(chave_tarefa(tarefa_id), VALIDADE_TAREFA)
+def recuperar_pendentes(r) -> int:
+    """Devolve para a fila o que ficou em 'processando' de uma execucao anterior."""
+    recuperadas = 0
+    while r.lmove(contrato.PROCESSANDO, contrato.FILA, "RIGHT", "RIGHT") is not None:
+        recuperadas += 1
+    if recuperadas:
+        log.warning("%d tarefa(s) interrompida(s) devolvida(s) a fila", recuperadas)
+    return recuperadas
 
 
-def enfileirar(r: redis.Redis, documentos: list[dict]) -> str:
-    """Coloca os documentos na fila e devolve o identificador da tarefa."""
-    tarefa_id = uuid.uuid4().hex
-    atualizar_tarefa(r, tarefa_id, estado="pendente", documentos=len(documentos),
-                     tentativas=0, criada_em=time.time())
-    r.lpush(FILA, json.dumps({"id": tarefa_id, "documentos": documentos, "tentativas": 0}))
-    return tarefa_id
+def concluir(r, original: str, tarefa_id: str, **resultado) -> None:
+    with r.pipeline(transaction=True) as lote:
+        contrato.atualizar_tarefa(lote, tarefa_id, estado=contrato.CONCLUIDA,
+                                  concluida_em=time.time(), erro="", **resultado)
+        lote.lrem(contrato.PROCESSANDO, 1, original)
+        lote.execute()
 
 
-def consultar_tarefa(r: redis.Redis, tarefa_id: str) -> dict | None:
-    dados = r.hgetall(chave_tarefa(tarefa_id))
-    return dados or None
+def reenfileirar(r, original: str, tarefa: dict, motivo: str) -> None:
+    with r.pipeline(transaction=True) as lote:
+        contrato.atualizar_tarefa(lote, tarefa["id"], estado=contrato.PENDENTE,
+                                  tentativas=tarefa["tentativas"], erro=motivo)
+        lote.lpush(contrato.FILA, json.dumps(tarefa))
+        lote.expire(contrato.FILA, contrato.VALIDADE_TAREFA)
+        lote.lrem(contrato.PROCESSANDO, 1, original)
+        lote.execute()
+
+
+def descartar(r, original: str, tarefa_id: str | None, motivo: str,
+              mensagem: str | None = None) -> None:
+    """Manda para a dead-letter. `motivo` e uma categoria, nunca o conteudo do erro."""
+    entrada = {"mensagem": mensagem or original, "motivo": motivo, "em": time.time()}
+    with r.pipeline(transaction=True) as lote:
+        lote.lpush(contrato.DLQ, json.dumps(entrada))
+        lote.expire(contrato.DLQ, int(DLQ_RETENCAO))
+        if tarefa_id:
+            contrato.atualizar_tarefa(lote, tarefa_id, estado=contrato.FALHOU, erro=motivo)
+        lote.lrem(contrato.PROCESSANDO, 1, original)
+        lote.execute()
+    log.error("tarefa %s enviada para a dead-letter: %s", tarefa_id or "(ilegivel)", motivo)
+
+
+def expurgar_dlq(r) -> int:
+    """Remove da dead-letter o que passou do prazo (as mais antigas ficam no fim)."""
+    limite = time.time() - DLQ_RETENCAO
+    removidas = 0
+    while (antiga := r.lindex(contrato.DLQ, -1)) is not None:
+        try:
+            if json.loads(cast(str, antiga))["em"] > limite:
+                break
+        except (ValueError, KeyError, TypeError):
+            pass  # entrada ilegivel tambem sai
+        r.rpop(contrato.DLQ)
+        removidas += 1
+    return removidas
