@@ -1,0 +1,106 @@
+# Rascunho do Blueprint, validado com `render blueprints validate` em 26/11/2026.
+# Validou-se so o esquema: nada foi criado. Na Tarefa 5, mover para ./render.yaml,
+# conferir contra o codigo e validar de novo.
+# Atencao: o Postgres gratuito expira 30 dias apos a criacao.
+
+databases:
+  - name: c3a2-vetorial
+    plan: free
+    region: virginia
+    postgresMajorVersion: "17"
+    ipAllowList: []
+
+envVarGroups:
+  - name: c3a2-interno
+    envVars:
+      - key: TOKEN_INTERNO
+        generateValue: true
+
+services:
+  - type: keyvalue
+    name: c3a2-fila
+    plan: free
+    region: virginia
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
+  - type: web
+    name: c3a2-inferencia
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerContext: .
+    dockerfilePath: ./inferencia/Dockerfile
+    healthCheckPath: /saude
+    buildFilter:
+      paths: [inferencia/**, comum/**, vetorial/**, pyproject.toml, uv.lock]
+    envVars:
+      - fromGroup: c3a2-interno
+      - key: DATABASE_URL
+        fromDatabase: {name: c3a2-vetorial, property: connectionString}
+      - key: OTEL_SERVICE_NAME
+        value: inferencia
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: https://api.honeycomb.io
+      - key: OTEL_EXPORTER_OTLP_HEADERS
+        sync: false
+
+  - type: web
+    name: c3a2-worker
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerContext: .
+    dockerfilePath: ./worker/Dockerfile
+    healthCheckPath: /saude
+    buildFilter:
+      paths: [worker/**, comum/**, vetorial/**, pyproject.toml, uv.lock]
+    envVars:
+      - fromGroup: c3a2-interno
+      - key: DATABASE_URL
+        fromDatabase: {name: c3a2-vetorial, property: connectionString}
+      - key: REDIS_URL
+        fromService: {type: keyvalue, name: c3a2-fila, property: connectionString}
+      - key: URL_INFERENCIA
+        fromService: {type: web, name: c3a2-inferencia, envVarKey: RENDER_EXTERNAL_URL}
+      - key: TIMEOUT_INFERENCIA
+        value: "90"
+      - key: OTEL_SERVICE_NAME
+        value: worker
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: https://api.honeycomb.io
+      - key: OTEL_EXPORTER_OTLP_HEADERS
+        sync: false
+
+  - type: web
+    name: c3a2-gateway
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerContext: .
+    dockerfilePath: ./gateway/Dockerfile
+    healthCheckPath: /saude
+    buildFilter:
+      paths: [gateway/**, comum/**, pyproject.toml, uv.lock]
+    envVars:
+      - fromGroup: c3a2-interno
+      - key: JWT_SEGREDO
+        generateValue: true
+      - key: USUARIO_DEMO
+        value: professor
+      - key: SENHA_DEMO
+        sync: false
+      - key: REDIS_URL
+        fromService: {type: keyvalue, name: c3a2-fila, property: connectionString}
+      - key: URL_INFERENCIA
+        fromService: {type: web, name: c3a2-inferencia, envVarKey: RENDER_EXTERNAL_URL}
+      - key: URL_WORKER
+        fromService: {type: web, name: c3a2-worker, envVarKey: RENDER_EXTERNAL_URL}
+      - key: TIMEOUT_INFERENCIA
+        value: "90"
+      - key: OTEL_SERVICE_NAME
+        value: gateway
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: https://api.honeycomb.io
+      - key: OTEL_EXPORTER_OTLP_HEADERS
+        sync: false
