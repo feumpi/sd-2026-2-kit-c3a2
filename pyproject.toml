@@ -31,14 +31,12 @@ inferencia = [
     {include-group = "comum"},
     "joblib==1.4.2",
     "opentelemetry-instrumentation-psycopg>=0.66b2",
-    "pgvector>=0.5.1",
     "psycopg[binary,pool]>=3.3.9",
     "scikit-learn==1.5.2",
 ]
 worker = [
     {include-group = "comum"},
     "opentelemetry-instrumentation-psycopg>=0.66b2",
-    "pgvector>=0.5.1",
     "psycopg[binary,pool]>=3.3.9",
 ]
 dev = [

@@ -5,7 +5,7 @@ import pytest
 
 DEPENDENCIAS = [
     "fastapi", "uvicorn", "pydantic", "requests", "redis", "jwt", "sklearn", "joblib",
-    "psycopg", "psycopg_pool", "pgvector.psycopg", "fakeredis", "httpx",
+    "psycopg", "psycopg_pool", "fakeredis", "httpx",
     "opentelemetry.sdk.trace", "opentelemetry.exporter.otlp.proto.http.trace_exporter",
     "opentelemetry.instrumentation.fastapi", "opentelemetry.instrumentation.requests",
     "opentelemetry.instrumentation.psycopg",
