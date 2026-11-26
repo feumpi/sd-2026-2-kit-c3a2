@@ -11,6 +11,7 @@ O arquivo de credenciais tem linhas USUARIO_DEMO=... e SENHA_DEMO=... e fica for
 repositorio. Sem ele valem E2E_USUARIO/E2E_SENHA ou os padroes do compose local.
 """
 import os
+import subprocess
 import time
 import uuid
 from pathlib import Path
@@ -27,6 +28,7 @@ ESPERA = 60 if LOCAL else 240
 TEMPO_LIMITE = 30 if LOCAL else 150
 # intervalo que nao estoura o limite de requisicoes por minuto
 INTERVALO = 2
+RAIZ = Path(__file__).resolve().parent.parent
 
 
 def credenciais() -> dict:
@@ -141,3 +143,47 @@ def test_reenviar_o_mesmo_documento_nao_duplica(cliente, documento):
 def test_tarefa_inexistente(cliente):
     resposta = cliente.get(f"{BASE}/tarefas/nao-existe", timeout=TEMPO_LIMITE)
     assert resposta.status_code == 404
+
+
+def compose(*argumentos) -> str:
+    return subprocess.run(["docker", "compose", *argumentos], cwd=RAIZ, check=True,
+                          capture_output=True, text=True, timeout=120).stdout
+
+
+def mortas() -> int:
+    return int(compose("exec", "-T", "redis", "redis-cli", "llen", "fila:tarefas:dlq"))
+
+
+@pytest.mark.skipif(not LOCAL, reason="derruba containers: so no compose local")
+def test_inferencia_fora_do_ar_degrada_e_depois_se_recupera(anonimo, cliente):
+    def predizer():
+        return cliente.post(f"{BASE}/predict", json={"texto": "muito bom"}, timeout=TEMPO_LIMITE)
+
+    marca = uuid.uuid4().hex[:12]
+    descartadas = mortas()
+    compose("stop", "inferencia")
+    try:
+        for _ in range(4):
+            resposta = predizer()
+            assert resposta.status_code == 503
+            assert "Retry-After" in resposta.headers
+        saude = anonimo.get(f"{BASE}/saude", timeout=5).json()
+        assert saude["disjuntores"]["inferencia"] == "aberto"
+
+        envio = cliente.post(f"{BASE}/documentos", timeout=TEMPO_LIMITE,
+                             json={"texto": f"documento enviado durante a falha {marca}",
+                                   "origem": f"e2e-{marca}"})
+        assert envio.status_code == 202  # a fila aceita mesmo com a inferencia fora
+        caminho = envio.json()["acompanhar"]
+        time.sleep(15)  # o worker tenta, falha, abre o proprio disjuntor e espera
+        estado = cliente.get(f"{BASE}{caminho}", timeout=TEMPO_LIMITE).json()
+        assert estado["estado"] == "pendente" and estado["tentativas"] == "0", estado
+        assert mortas() == descartadas
+    finally:
+        compose("start", "inferencia")
+
+    esperar(lambda: predizer().status_code == 200, segundos=90)
+    estado = esperar(lambda: terminada(cliente, caminho), segundos=120)
+    assert estado["estado"] == "concluida", estado
+    saude = anonimo.get(f"{BASE}/saude", timeout=5).json()
+    assert saude["disjuntores"]["inferencia"] == "fechado"
