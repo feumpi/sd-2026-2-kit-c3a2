@@ -9,7 +9,8 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 |-------|--------|
 | Fase 0 — Ambiente | concluída e validada em 26/11/2026 |
 | F1 Base da arquitetura | concluída em 26/11/2026 |
-| 1 a 10 (kit) | pendentes |
+| 3 Dockerfiles e 4 Compose | concluídas em 26/11/2026 |
+| 1, 2, 5 a 10 (kit) | pendentes |
 | F2 README e F3 Verificação final | pendentes |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
@@ -195,6 +196,40 @@ SQL só rodou com o pool substituído; o compose (Tarefas 3 e 4) é a primeira p
 
 **Revisão do advisor:** sem bloqueios; pediu o `.env.example` completo (15 variáveis
 faltavam) e a prova de ponta a ponta no banco real junto com o compose.
+
+## Tarefas 3 e 4 — Dockerfiles e compose (26/11/2026)
+
+**O que foi feito:** um Dockerfile por serviço (os quatro do §2, inclusive o vetorial),
+`.dockerignore`, `docker-compose.yml` com healthchecks e o teste ponta a ponta.
+
+**Decisões e justificativas (Aulas 13 e 14):**
+
+- Dependências instaladas com `uv sync --frozen --only-group <servico>`, antes do código, para
+  a camada ser reaproveitada; apps rodam com usuário sem privilégios.
+- O modelo é treinado no build da inferência: o usuário da imagem não grava na pasta e o cold
+  start fica menor.
+- Só `8000` e `16686` publicadas. Os endereços entre serviços são fixos no compose (descoberta
+  por nome), o que também impede que uma variável do shell aponte o sistema local para um banco
+  alheio.
+- **Jaeger sem healthcheck** (desvio do texto da tarefa): a imagem não tem shell nem comando de
+  verificação, e nenhum serviço depende dele para subir.
+- Fila local com `appendonly`, para sobreviver a reinícios; na nuvem o Key Value não persiste.
+- As verificações de saúde passaram a ser registradas só em depuração, para não afogar os logs.
+
+**Problemas encontrados:** um `git add` com arquivos já removidos interrompeu a sequência de
+commits; o primeiro clone limpo falhou por isso. Como efeito, a remoção de
+`gateway/requirements.txt` e `Dockerfile.exemplo` ficou no commit "registra as verificações de
+saúde só em depuração". O histórico não foi reescrito.
+
+**Verificação:** `docker compose build` sem erros; `id -u` = 1000 nos três apps;
+`modelo.joblib` presente na imagem. Num **clone limpo, sem `.env` e com volumes vazios**,
+`docker compose up --build -d --wait` subiu tudo e `uv run pytest -m e2e` passou (6 testes),
+exercitando o SQL no Postgres real (esquema, inserção com `::vector`, busca com `<=>`).
+Memória em repouso: inferência 112 MB, worker 60 MB, vetorial 57 MB, gateway 55 MB, Jaeger
+16 MB, Redis 5 MB — folga grande para os 512 MB por serviço do Render.
+
+**Revisão do advisor:** sem bloqueios; pediu o registro do commit misturado, do Jaeger sem
+healthcheck e das medidas de memória.
 
 <!--
 Modelo para as próximas etapas:

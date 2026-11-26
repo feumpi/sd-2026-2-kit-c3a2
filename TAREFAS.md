@@ -86,21 +86,21 @@ por ser núcleo do kit do professor.
 - [ ] Limite por cliente por minuto no Redis; 429 com `Retry-After`; IP nunca gravado em claro
 - **Aceite:** testes de 429 ao estourar o limite e de liberação na janela seguinte.
 
-### [ ] 3. Dockerfile de cada servico (R3)
+### [x] 3. Dockerfile de cada servico (R3)
 
 Um Dockerfile por servico. Use `Dockerfile.exemplo` como ponto de partida. (Aula 13)
 
-- [ ] `gateway/Dockerfile`, `inferencia/Dockerfile`, `worker/Dockerfile`, `vetorial/Dockerfile`
-- [ ] Dependências instaladas com `uv` a partir do `uv.lock`; `.dockerignore`
-- [ ] Remover `gateway/requirements.txt` e `Dockerfile.exemplo`, substituídos
+- [x] `gateway/Dockerfile`, `inferencia/Dockerfile`, `worker/Dockerfile`, `vetorial/Dockerfile`
+- [x] Dependências instaladas com `uv` a partir do `uv.lock`; `.dockerignore`
+- [x] Remover `gateway/requirements.txt` e `Dockerfile.exemplo`, substituídos
 - **Aceite:** `docker compose build` sem erros; apps rodam com usuário sem privilégios.
 
-### [ ] 4. docker-compose completo (R3)
+### [x] 4. docker-compose completo (R3)
 
 O sistema inteiro deve subir com UM comando. (Aula 14)
 
-- [ ] `redis`, `vetorial`, `inferencia`, `worker`, `gateway`, `jaeger`, com healthchecks
-- [ ] Serviços se acham pelo nome; só `8000` (gateway) e `16686` (Jaeger) expostos
+- [x] `redis`, `vetorial`, `inferencia`, `worker`, `gateway`, `jaeger`, com healthchecks
+- [x] Serviços se acham pelo nome; só `8000` (gateway) e `16686` (Jaeger) expostos
 - **Aceite:** `docker compose up --build` num clone limpo, **sem `.env`**; teste e2e passa.
 
 ### [ ] 5. Deploy em nuvem (free tier) (R4)
