@@ -12,7 +12,8 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | 3 Dockerfiles e 4 Compose | concluídas em 26/11/2026 |
 | 1 JWT e 2 Rate limit | concluídas em 26/11/2026 |
 | 6 Resiliência | concluída em 26/11/2026 |
-| 5, 7 a 10 (kit) | pendentes |
+| 7 Observabilidade | implementada e verificada no Jaeger; Honeycomb pendente do deploy |
+| 5, 8 a 10 (kit) | pendentes |
 | F2 README e F3 Verificação final | pendentes |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
@@ -296,6 +297,36 @@ O teste `test_inferencia_fora_do_ar_degrada_e_depois_se_recupera` repete o prime
 
 **Revisão do advisor:** sem bloqueios; apontou que o orçamento aninhado ignorava o tempo da
 busca no banco. O prazo do LLM caiu de 8 s para 4 s e há um teste para a soma.
+
+## Tarefa 7 — Observabilidade (26/11/2026)
+
+**O que foi feito:** OpenTelemetry nos três serviços (HTTP recebido e feito, Postgres), spans
+`publicar fila:tarefas` e `processar fila:tarefas` com o contexto viajando na mensagem,
+`trace_id` em todas as linhas de log e limpeza dos spans antes da exportação.
+
+**Decisões e justificativas (Aula 15):**
+
+- Só há exportação com `OTEL_EXPORTER_OTLP_ENDPOINT` preenchido; sem ele os ids continuam
+  correlacionando os logs.
+- A limpeza fica num **exportador que envolve o OTLP**, porque os atributos são somente leitura
+  depois de o span encerrar. Saem IP, porta, agente do usuário, caminho e consulta digitados
+  pelo cliente (fica `http.route`), mensagens e pilhas de exceção e descrições de erro. Os
+  testes usam o mesmo invólucro sobre um exportador em memória.
+- O span do consumidor só é aberto depois que o `BLMOVE` entrega uma mensagem: o laço ocioso
+  não gera traces.
+- A consulta vazia com que o pool testa a conexão é descartada: virava um span sem informação.
+- `trace_id` entra por uma fábrica de registros de log, valendo para qualquer linha.
+
+**Problemas encontrados:** o Jaeger 2.23 não responde na API antiga (`/api/traces`); o teste
+usa a `/api/v3`.
+
+**Verificação:** 197 testes unitários e 13 e2e passando. O teste e2e consulta o Jaeger e exige
+um único `traceId` com `POST /documentos` (gateway) → `publicar` → `processar` (worker) →
+`POST /processar` (inferência) → `INSERT` (Postgres). Num trace gerado durante a queda da
+inferência aparecem também as tentativas e adiamentos. Nos logs dos três serviços não há
+texto, senha, token, usuário nem IP.
+
+![Trace único no Jaeger](imagens/trace-jaeger.png)
 
 <!--
 Modelo para as próximas etapas:

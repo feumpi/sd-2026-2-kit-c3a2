@@ -129,11 +129,13 @@ Tempo-limite, retentativa com espera progressiva e circuit breaker. (Aula 11)
 
 Rastreamento distribuido cobrindo gateway -> fila -> worker. (Aula 15)
 
-- [ ] OpenTelemetry nos três serviços, `service.name` distinto
-- [ ] Contexto propagado **dentro da mensagem da fila** (`traceparent`)
-- [ ] `trace_id` nos logs; nenhum dado pessoal em spans ou logs
+- [x] OpenTelemetry nos três serviços, `service.name` distinto
+- [x] Contexto propagado **dentro da mensagem da fila** (`traceparent`)
+- [x] `trace_id` nos logs; nenhum dado pessoal em spans ou logs
 - **Aceite:** um único trace no Jaeger com gateway → fila → worker → inferência → banco;
   o mesmo no Honeycomb para o ambiente publicado.
+- Verificado no Jaeger local; **a parte do Honeycomb fica pendente até o deploy** (Tarefa 5),
+  por isso a tarefa só é marcada depois dele.
 
 ### [ ] 8. HTTPS no servico publicado. (R6) (Aula 16)
 
