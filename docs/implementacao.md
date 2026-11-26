@@ -7,7 +7,7 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 
 | Etapa | Status |
 |-------|--------|
-| Fase 0 — Ambiente | concluída em 26/11/2026 (contas na nuvem pendentes com o usuário) |
+| Fase 0 — Ambiente | concluída em 26/11/2026 (falta conectar o GitHub ao Render e criar a chave do Honeycomb) |
 | F1 Base da arquitetura | pendente |
 | 1 a 10 (kit) | pendentes |
 | F2 README e F3 Verificação final | pendentes |
@@ -49,7 +49,7 @@ escolhas simples e de reuso.
   2.9.0 para 2.15.1, porque a versão do kit tem vários avisos de segurança e é a base da
   autenticação (consulta ao OSV em 26/11/2026). Dependências novas resolvidas na versão atual
   e travadas no `uv.lock`.
-- **Pendência de segurança em aberto:** a mesma consulta aponta avisos em `starlette` 0.38.6
+- **Pendência de segurança (resolvida na continuação abaixo):** a mesma consulta aponta avisos em `starlette` 0.38.6
   (trazido pelo `fastapi` 0.115.0 do kit; alguns de severidade alta) e em `requests` 2.32.3
   (moderados). Não foram atualizados; decidir com o usuário.
 - **Python 3.12**, como a imagem do kit e o C2.
@@ -98,6 +98,36 @@ escolhas simples e de reuso.
   (o repositório é público); os commits de documentação, ainda locais, foram refeitos. Também
   entraram os cuidados com minutos de build do Render, tempo-limite durante o cold start da
   inferência, URLs públicas no `render.yaml` e a justificativa correta da versão do `pyjwt`.
+
+## Fase 0 — Continuação (26/11/2026)
+
+### Decisões do usuário
+
+| Tema | Decisão | Motivo |
+|------|---------|--------|
+| Banco na nuvem | **Postgres gratuito do Render**, no lugar do Neon | a organização disponível no Neon está em plano pago por uso, e o edital exige free tier |
+| Credenciais publicadas | e-mail ao professor | no README público permitiriam uso por qualquer um (leitura de textos alheios, estouro de cota); no AVA contrariariam o "APENAS o link" do §9 |
+| Honeycomb | região US | — |
+| Vulnerabilidades | atualizar | — |
+
+Consequências do novo banco: sem conta extra e com acesso por rede privada; em troca, expira
+em 30 dias, não tem backup e há um só por workspace. Por isso é criado apenas no deploy. Onde
+a seção anterior menciona o Neon, vale esta decisão.
+
+### O que foi feito
+
+- `fastapi` 0.115.0 → 0.165.0 (leva o `starlette` a 1.10.0) e `requests` 2.32.3 → 2.34.2;
+  `pydantic` e `uvicorn` não precisaram mudar. Depois disso: 19 testes passando, builds por
+  grupo em Docker ok e consulta ao OSV sem avisos nos 65 pacotes travados.
+- Teste rápido da instrumentação com as novas versões: `/saude` excluído dos traces; spans
+  trazem `net.peer.ip`, que precisa ser removido (LGPD).
+- Pyright instalado com `vp` (ferramenta Node) e apontado para o `.venv`. Os erros que acusa
+  estão nos arquivos importados.
+- CLI do Render: workspace definido; nenhum serviço criado.
+- Blueprint rascunhado em `deploy/render.yaml.rascunho` e aprovado por
+  `render blueprints validate` (6 recursos); um plano inválido foi recusado, o que mostra que a
+  validação verifica de fato. Comportamento em execução não verificado.
+- A conexão do GitHub ao Render exige consentimento no navegador e ficou com o usuário.
 
 <!--
 Modelo para as próximas etapas:
