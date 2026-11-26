@@ -276,8 +276,8 @@ worker→inferência e inferência→LLM; estado dos disjuntores nas rotas `/sau
 - **O que conta como falha:** erro de transporte, 5xx e 429. Um 4xx volta como resposta. No
   gateway, o 503 **degradado** da inferência (banco ou LLM fora) também não conta: senão uma
   queda do banco derrubaria o `/predict`, que não depende dele.
-- Orçamentos aninhados: o do LLM (`LLM_PRAZO_TOTAL`, 8 s) fica abaixo do tempo-limite do
-  gateway (10 s).
+- Orçamentos aninhados: busca no banco (`DB_TIMEOUT`, 5 s) mais o prazo do LLM
+  (`LLM_PRAZO_TOTAL`, 4 s) ficam abaixo do tempo-limite do gateway (10 s).
 - `llm.gerar` ganhou o parâmetro opcional `tempo_limite` (única mudança no cliente do kit).
 - No worker, circuito aberto é falha transitória e a espera é a que o disjuntor pede.
 - Sem disjuntor no banco: o pool já limita cada tentativa a `DB_TIMEOUT` (5 s).
@@ -293,6 +293,9 @@ worker→inferência e inferência→LLM; estado dos disjuntores nas rotas `/sau
 
 O teste `test_inferencia_fora_do_ar_degrada_e_depois_se_recupera` repete o primeiro cenário
 (e2e: 12 passando). Unitários: 185 passando.
+
+**Revisão do advisor:** sem bloqueios; apontou que o orçamento aninhado ignorava o tempo da
+busca no banco. O prazo do LLM caiu de 8 s para 4 s e há um teste para a soma.
 
 <!--
 Modelo para as próximas etapas:
