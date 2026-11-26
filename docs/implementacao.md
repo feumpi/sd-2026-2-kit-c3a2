@@ -13,8 +13,10 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | 1 JWT e 2 Rate limit | concluídas em 26/11/2026 |
 | 6 Resiliência | concluída em 26/11/2026 |
 | 7 Observabilidade | implementada e verificada no Jaeger; Honeycomb pendente do deploy |
-| 5, 8 a 10 (kit) | pendentes |
-| F2 README e F3 Verificação final | pendentes |
+| 8 HTTPS | concluída em 26/11/2026 |
+| 5 Deploy | serviços no ar; fluxo completo pendente |
+| 9, 10 e F2 | redigidas; faltam as medições no ambiente publicado |
+| F3 Verificação final | pendente |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
 
@@ -337,6 +339,35 @@ texto, senha, token, usuário nem IP.
   `OTEL_EXPORTER_OTLP_HEADERS`. `render blueprints validate`: válido, 7 recursos.
 - Credenciais geradas em `~/.config/c3a2/credenciais.env` (fora do repositório, permissão 600),
   sem exibição.
+
+## Tarefas 5 e 8 — Primeiro deploy (26/11/2026)
+
+**O que foi feito:** o usuário aplicou o Blueprint no painel.
+
+**Problema encontrado:** a sincronização criou banco, fila e grupos, publicou a inferência em
+pouco mais de um minuto e ficou mais de 30 minutos presa nessa etapa, sem criar worker e
+gateway, sem erro e sem incidente na página de status do Render. A diferença entre essa etapa e
+as demais era que worker e gateway liam a `RENDER_EXTERNAL_URL` da inferência por
+`fromService … envVarKey`; a documentação do Blueprint só descreve o uso das variáveis padrão
+pelo próprio serviço. Com as URLs públicas fixas no `render.yaml`, o push abriu uma nova
+sincronização e os dois serviços foram criados em segundos. A causa é a explicação mais
+provável do que se observou, não algo confirmado pelo Render. O `render blueprints validate`
+aceitava a versão anterior.
+
+**Decisões:** URLs fixas no arquivo (não são segredo). Alternativa descartada: variáveis
+`sync: false` digitadas no painel, que acrescentariam um passo manual. Custo: numa instalação
+nova é preciso ajustar as URLs (ver `deploy/INSTRUCOES.md`).
+
+**Verificação:** os três serviços no ar; log do worker com a linha de expurgo (banco, esquema e
+fila). `http://` responde 301 para `https://` nos três; certificado válido (Google Trust
+Services). Sem o token interno, inferência e worker respondem 401, inclusive em `/docs`.
+
+**Pendências:** nos primeiros testes o login publicado respondeu 401 com as credenciais do
+arquivo local, e o exportador de traces recebeu 401 do Honeycomb nos três serviços. Ambos
+dependem de valores que só o usuário digita no painel.
+
+**Revisão do advisor:** identificou a referência entre serviços como causa provável do
+travamento; depois, pediu para publicar a documentação já e concluir a Tarefa 8.
 
 <!--
 Modelo para as próximas etapas:

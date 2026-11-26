@@ -137,9 +137,10 @@ Rastreamento distribuido cobrindo gateway -> fila -> worker. (Aula 15)
 - Verificado no Jaeger local; **a parte do Honeycomb fica pendente até o deploy** (Tarefa 5),
   por isso a tarefa só é marcada depois dele.
 
-### [ ] 8. HTTPS no servico publicado. (R6) (Aula 16)
+### [x] 8. HTTPS no servico publicado. (R6) (Aula 16)
 
 - **Aceite:** URL `https://` responde com certificado válido e `http://` redireciona.
+- Verificado em 26/11/2026 nos três serviços publicados.
 
 ### [ ] 9. Secao de conformidade no README (R6)
 

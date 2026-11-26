@@ -60,12 +60,11 @@ Fatos conferidos na documentação do Render em 26/11/2026 (reconfira se algo di
 
 ## Blueprint
 
-[render.yaml](../render.yaml) passou no `render blueprints validate`. Isso confirma o
-esquema, não o comportamento: confira em execução se `URL_INFERENCIA` e
-`URL_WORKER` (via `envVarKey: RENDER_EXTERNAL_URL`) chegam como URLs públicas
-`https://….onrender.com`. Não troque por `property: host`/`hostport`, que são endereços de
-rede privada. O plugin do Render roda `render blueprints validate` a cada edição desse
-arquivo.
+[render.yaml](../render.yaml) passou no `render blueprints validate`, que confirma o esquema,
+não o comportamento. Observado no primeiro deploy: com `URL_INFERENCIA`/`URL_WORKER` vindas de
+`envVarKey: RENDER_EXTERNAL_URL` de outro serviço, a sincronização ficou presa; com as URLs
+públicas fixas, prosseguiu. Não troque por `property: host`/`hostport`, que são endereços de
+rede privada. O plugin do Render roda `render blueprints validate` a cada edição desse arquivo.
 
 ## Passos que dependem do usuário
 
