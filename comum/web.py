@@ -78,7 +78,10 @@ def registrar_requisicoes(app: FastAPI) -> None:
             log.error("erro nao tratado: %s trace_id=%s", onde_falhou(erro), id_do_trace())
             resposta = JSONResponse(status_code=500, content={"erro": "erro interno"})
         rota = getattr(request.scope.get("route"), "path", "-")
-        log.info("metodo=%s rota=%s status=%d duracao_ms=%.1f trace_id=%s",
-                 request.method, rota, resposta.status_code,
-                 (time.perf_counter() - inicio) * 1000, id_do_trace())
+        # as verificacoes de saude se repetem a cada poucos segundos: so em depuracao
+        rotina = rota == "/saude" and resposta.status_code < 400
+        log.log(logging.DEBUG if rotina else logging.INFO,
+                "metodo=%s rota=%s status=%d duracao_ms=%.1f trace_id=%s",
+                request.method, rota, resposta.status_code,
+                (time.perf_counter() - inicio) * 1000, id_do_trace())
         return resposta
