@@ -21,9 +21,8 @@ import redis
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Path
 from fastapi.responses import RedirectResponse
 
-from comum import contrato, web
+from comum import contrato, observabilidade, web
 from comum.modelos import Consulta, Documento, EntradaTexto
-from comum.observabilidade import injetar_contexto
 from gateway import autenticacao, inferencia, limite
 from gateway.despertar import despertar
 
@@ -41,6 +40,7 @@ async def ciclo_de_vida(app: FastAPI):
     autenticacao.segredo()  # sem segredo forte o gateway nem sobe
     despertar(inferencia.URL_INFERENCIA, URL_WORKER)
     yield
+    observabilidade.encerrar()
 
 
 app = FastAPI(title="Plataforma de IA - Gateway C3.A2", lifespan=ciclo_de_vida)
@@ -69,8 +69,9 @@ def predict(entrada: EntradaTexto):
 def enviar_documento(documento: Documento):
     """Enfileira o documento; acompanhe em GET /tarefas/{id}."""
     try:
-        tarefa_id = contrato.enfileirar(redis_cliente, documento.model_dump(),
-                                        injetar_contexto())
+        with observabilidade.span_produtor() as (span, contexto):
+            tarefa_id = contrato.enfileirar(redis_cliente, documento.model_dump(), contexto)
+            span.set_attribute("tarefa.id", tarefa_id)
     except redis.RedisError as erro:
         log.warning("fila indisponivel: %s", type(erro).__name__)
         return web.indisponivel(FILA_FORA)
@@ -106,3 +107,4 @@ def perguntar(consulta: Consulta):
 app.include_router(autenticacao.roteador, dependencies=[Depends(limite.limitar_endereco)])
 app.include_router(protegidas)
 web.registrar_requisicoes(app)
+observabilidade.configurar(app, "gateway")

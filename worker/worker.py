@@ -19,8 +19,10 @@ import threading
 import time
 
 import redis
+from opentelemetry.trace import StatusCode
 
 from comum.circuit_breaker import CircuitoAberto
+from comum.observabilidade import span_consumidor
 from comum.resiliencia import eh_transitoria
 from comum.web import onde_falhou
 from vetorial.repositorio import BancoIndisponivel, EsquemaAusente
@@ -109,16 +111,21 @@ def processar_uma(r, repositorio, parar: threading.Event, espera: int = ESPERA_F
     except ValueError:
         fila.descartar(r, original, None, "mensagem invalida")
         return True
-    try:
-        resultado = executar(tarefa, repositorio)
-    except Exception as erro:
-        if isinstance(erro, EsquemaAusente):
-            repositorio.aplicar_esquema()
-        tratar_falha(r, original, tarefa, erro, parar)
+    # continua o trace de quem publicou; o laco ocioso nao gera spans
+    with span_consumidor(tarefa.get("contexto_trace")) as span:
+        span.set_attribute("tarefa.id", tarefa["id"])
+        try:
+            resultado = executar(tarefa, repositorio)
+        except Exception as erro:
+            span.set_status(StatusCode.ERROR)
+            span.set_attribute("tarefa.falha", type(erro).__name__)
+            if isinstance(erro, EsquemaAusente):
+                repositorio.aplicar_esquema()
+            tratar_falha(r, original, tarefa, erro, parar)
+            return True
+        fila.concluir(r, original, tarefa["id"], **resultado)
+        log.info("tarefa %s concluida", tarefa["id"])
         return True
-    fila.concluir(r, original, tarefa["id"], **resultado)
-    log.info("tarefa %s concluida", tarefa["id"])
-    return True
 
 
 def expurgar(r, repositorio) -> None:

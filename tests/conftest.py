@@ -23,9 +23,36 @@ os.environ.update({
 })
 
 
+def _traces_em_memoria():
+    """Instala o provedor antes de os apps serem importados, com a mesma limpeza de dados."""
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+    from comum.observabilidade import ExportadorSemDadosPessoais
+
+    memoria = InMemorySpanExporter()
+    provedor = TracerProvider()
+    provedor.add_span_processor(SimpleSpanProcessor(ExportadorSemDadosPessoais(memoria)))
+    trace.set_tracer_provider(provedor)
+    return memoria
+
+
+_SPANS = _traces_em_memoria()
+
+
+@pytest.fixture
+def spans():
+    _SPANS.clear()
+    return _SPANS
+
+
 @pytest.fixture(autouse=True)
-def disjuntores_novos(monkeypatch):
+def disjuntores_novos(request, monkeypatch):
     """Os disjuntores sao do processo: cada teste comeca com os seus."""
+    if request.node.get_closest_marker("e2e"):
+        return  # fala com o sistema no ar: nao importa (nem instrumenta) os servicos
     from comum.circuit_breaker import CircuitBreaker
     from gateway import inferencia as do_gateway
     from inferencia import app as da_inferencia

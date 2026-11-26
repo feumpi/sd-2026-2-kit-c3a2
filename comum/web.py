@@ -2,7 +2,7 @@
 Pecas HTTP comuns aos servicos: log sem dado pessoal, erros genericos e token interno.
 
 LGPD: o log leva so metodo, rota (o modelo, nao o caminho digitado), status, duracao e
-trace_id. Nunca corpo, cabecalho, usuario ou IP. Rode o uvicorn com --no-access-log.
+trace_id (em toda linha). Nunca corpo, cabecalho, usuario ou IP. Rode o uvicorn com --no-access-log.
 """
 import hmac
 import logging
@@ -14,15 +14,17 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from comum.observabilidade import id_do_trace
+from comum.observabilidade import correlacionar_logs
 
 CABECALHO_INTERNO = "X-Token-Interno"
 log = logging.getLogger("requisicoes")
 
 
 def configurar_logs() -> None:
-    logging.basicConfig(level=os.getenv("NIVEL_LOG", "INFO"),
-                        format="%(asctime)s %(levelname)s [%(name)s] %(message)s")
+    correlacionar_logs()
+    logging.basicConfig(
+        level=os.getenv("NIVEL_LOG", "INFO"),
+        format="%(asctime)s %(levelname)s [%(name)s] trace_id=%(trace_id)s %(message)s")
 
 
 def onde_falhou(erro: BaseException) -> str:
@@ -75,13 +77,13 @@ def registrar_requisicoes(app: FastAPI) -> None:
         try:
             resposta = await call_next(request)
         except Exception as erro:
-            log.error("erro nao tratado: %s trace_id=%s", onde_falhou(erro), id_do_trace())
+            log.error("erro nao tratado: %s", onde_falhou(erro))
             resposta = JSONResponse(status_code=500, content={"erro": "erro interno"})
         rota = getattr(request.scope.get("route"), "path", "-")
         # as verificacoes de saude se repetem a cada poucos segundos: so em depuracao
         rotina = rota == "/saude" and resposta.status_code < 400
         log.log(logging.DEBUG if rotina else logging.INFO,
-                "metodo=%s rota=%s status=%d duracao_ms=%.1f trace_id=%s",
+                "metodo=%s rota=%s status=%d duracao_ms=%.1f",
                 request.method, rota, resposta.status_code,
-                (time.perf_counter() - inicio) * 1000, id_do_trace())
+                (time.perf_counter() - inicio) * 1000)
         return resposta

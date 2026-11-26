@@ -15,8 +15,9 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from opentelemetry.instrumentation.psycopg import PsycopgInstrumentor
 
-from comum import web
+from comum import observabilidade, web
 from comum.circuit_breaker import CircuitBreaker, CircuitoAberto
 from comum.modelos import Consulta, EntradaTexto
 from comum.resiliencia import com_retentativa
@@ -26,6 +27,7 @@ from inferencia.modelo import ModeloSentimento, carregar_modelo
 from vetorial.repositorio import BancoIndisponivel, EsquemaAusente, Repositorio
 
 web.configurar_logs()
+PsycopgInstrumentor().instrument()  # antes de o pool abrir a primeira conexao
 log = logging.getLogger("inferencia")
 
 SEM_BASE = "Nao encontrei nos documentos indexados nada sobre essa pergunta."
@@ -51,12 +53,14 @@ async def ciclo_de_vida(app: FastAPI):
     log.info("modelo carregado")
     yield
     repositorio.fechar()
+    observabilidade.encerrar()
 
 
 app = FastAPI(title="Inferencia - C3.A2", lifespan=ciclo_de_vida,
               docs_url=None, redoc_url=None, openapi_url=None)
 web.exigir_token_interno(app)
 web.registrar_requisicoes(app)
+observabilidade.configurar(app, "inferencia")
 
 
 def prever(texto: str) -> dict:

@@ -8,13 +8,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from opentelemetry.instrumentation.psycopg import PsycopgInstrumentor
 
-from comum import contrato, web
+from comum import contrato, observabilidade, web
 from vetorial.repositorio import Repositorio
 from worker import inferencia
 from worker.worker import consumir
 
 web.configurar_logs()
+PsycopgInstrumentor().instrument()  # antes de o pool abrir a primeira conexao
 
 redis_cliente = contrato.conectar()
 repositorio = Repositorio()
@@ -32,12 +34,14 @@ async def ciclo_de_vida(app: FastAPI):
     parar.set()
     consumidor.join(timeout=8)
     repositorio.fechar()
+    observabilidade.encerrar()
 
 
 app = FastAPI(title="Worker - C3.A2", lifespan=ciclo_de_vida,
               docs_url=None, redoc_url=None, openapi_url=None)
 web.exigir_token_interno(app)
 web.registrar_requisicoes(app)
+observabilidade.configurar(app, "worker")
 
 
 @app.get("/saude")
