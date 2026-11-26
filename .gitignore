@@ -9,3 +9,7 @@ venv/
 *_pb2_grpc.py
 .pytest_cache/
 .DS_Store
+.ruff_cache/
+dados/
+.env.*
+!.env.example

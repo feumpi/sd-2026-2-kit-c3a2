@@ -1,0 +1,68 @@
+[project]
+name = "plataforma-ia"
+version = "0.1.0"
+description = "Plataforma de IA como Servico - Trabalho C3.A2 (Sistemas Distribuidos, FAESA 2026/2)"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv]
+package = false
+
+# Um grupo por servico: cada Dockerfile instala so o seu
+# (uv sync --frozen --only-group <servico>).
+[dependency-groups]
+comum = [
+    "fastapi==0.115.0",
+    "opentelemetry-api>=1.45.2",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.2",
+    "opentelemetry-instrumentation-fastapi>=0.66b2",
+    "opentelemetry-instrumentation-requests>=0.66b2",
+    "opentelemetry-sdk>=1.45.2",
+    "pydantic==2.9.2",
+    "redis==5.0.8",
+    "requests==2.32.3",
+    "uvicorn[standard]==0.30.6",
+]
+gateway = [
+    {include-group = "comum"},
+    "pyjwt==2.10.1",
+]
+inferencia = [
+    {include-group = "comum"},
+    "joblib==1.4.2",
+    "opentelemetry-instrumentation-psycopg>=0.66b2",
+    "pgvector>=0.5.1",
+    "psycopg[binary,pool]>=3.3.9",
+    "scikit-learn==1.5.2",
+]
+worker = [
+    {include-group = "comum"},
+    "opentelemetry-instrumentation-psycopg>=0.66b2",
+    "pgvector>=0.5.1",
+    "psycopg[binary,pool]>=3.3.9",
+]
+dev = [
+    {include-group = "gateway"},
+    {include-group = "inferencia"},
+    {include-group = "worker"},
+    "fakeredis>=2.41.0",
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+    "ruff>=0.17.6",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = ["e2e: exige o sistema no ar via docker compose"]
+addopts = "-m 'not e2e'"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# referencia/ e copia fiel do C1/C2, apenas para consulta
+extend-exclude = ["referencia"]
+
+[tool.ruff.lint]
+# explicito para o resultado nao depender de configuracao do usuario nem da versao do ruff
+select = ["E4", "E7", "E9", "F", "I"]
