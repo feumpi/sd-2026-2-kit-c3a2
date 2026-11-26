@@ -35,6 +35,9 @@ que não existem em todas as imagens.
   silêncio: aparecem traces separados.
 - Não instrumente o laço ocioso do worker no Redis (gera um trace a cada espera).
 - Incluir `trace_id` nas linhas de log, para correlação.
-- **LGPD:** a instrumentação FastAPI grava o IP do cliente em atributos do span
-  (`client.address`, `net.peer.ip`, `http.client_ip`, conforme a versão). Remova-os antes de
-  exportar e confira no Jaeger que não há IP, texto nem token. Vale para eventos de exceção.
+- **LGPD:** a instrumentação FastAPI grava o IP do cliente nos spans. Confirmado nas versões
+  travadas: `net.peer.ip` e `net.peer.port` (atrás de proxy podem surgir outros, como
+  `http.client_ip` ou `client.address`). Remova-os antes de exportar e confira no Jaeger que
+  não há IP, texto nem token. Vale para eventos de exceção.
+- `instrument_app(app, excluded_urls="saude", exclude_spans=["receive", "send"])` evita os
+  spans ASGI repetidos em cada requisição.

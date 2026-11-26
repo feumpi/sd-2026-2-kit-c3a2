@@ -4,7 +4,8 @@
 acesso ao banco vetorial. Rotas: tabela no `CLAUDE.md` da raiz.
 
 Estado: `app.py`, `Dockerfile` e `requirements.txt` são os do kit. Estenda o `app.py`
-(pode dividir em módulos); troque o `Dockerfile` pelo padrão com `uv`.
+(pode dividir em módulos); troque o `Dockerfile` pelo padrão com `uv`. O `requirements.txt`
+está desatualizado (versões com vulnerabilidades): as dependências valem pelo `uv.lock`.
 
 ## Autenticação (Tarefa 1, Aula 16)
 
@@ -12,6 +13,7 @@ Estado: `app.py`, `Dockerfile` e `requirements.txt` são os do kit. Estenda o `a
   HS256 com `sub` e `exp` (`JWT_EXPIRA_MIN`). `HTTPBearer` do FastAPI dá o botão Authorize
   no `/docs`.
 - 401 para token ausente, inválido ou expirado. Fixe `algorithms=["HS256"]` na verificação.
+- As credenciais do ambiente publicado não vão para o repositório (ver `CLAUDE.md` da raiz).
 - Segredo de `JWT_SEGREDO` (mínimo 32 bytes). O padrão serve só ao compose local; no Render o
   valor é gerado.
 

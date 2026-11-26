@@ -35,51 +35,58 @@ CMD ["sh", "-c", "exec uvicorn gateway.app:app --host 0.0.0.0 --port ${PORT:-800
 - Portas no host: só 8000 e 16686. Endereços por nome de serviço.
 - Jaeger recebe OTLP/HTTP em `http://jaeger:4318`; interface em `localhost:16686`.
 
-## Render + Neon + Honeycomb
+## Render + Honeycomb
 
 Fatos conferidos na documentação do Render em 26/11/2026 (reconfira se algo divergir):
 
-- Gratuito: 512 MB / 0,1 CPU; dorme após 15 min sem requisição de entrada; volta em ~1 min;
-  750 h por workspace/mês; pode reiniciar a qualquer momento; sem disco persistente.
+- Web gratuito: 512 MB / 0,1 CPU; dorme após 15 min sem requisição de entrada; volta em
+  ~1 min; 750 h por workspace/mês; pode reiniciar a qualquer momento; sem disco persistente.
 - **Não há background worker nem serviço privado gratuito.** Web service gratuito envia, mas
   **não recebe** tráfego de rede privada: serviços se chamam pelas URLs públicas HTTPS,
-  protegidos pelo token interno.
-- **Um** Key Value gratuito por workspace: 25 MB, 50 conexões, **sem persistência** (reinício
-  perde a fila; registrar nos trade-offs).
+  protegidos pelo token interno. Já o Key Value e o Postgres são alcançados pela rede privada
+  (mesma conta e região).
+- **Um** Key Value gratuito por workspace: 25 MB, 50 conexões, **sem persistência**.
+- **Um** Postgres gratuito por workspace: 1 GB, **expira 30 dias após a criação** (mais 14
+  dias de carência antes de ser apagado), sem backup e sem pooler.
 - A aplicação escuta em `0.0.0.0:$PORT` (padrão 10000). TLS automático e redirecionamento de
   HTTP para HTTPS.
-- Minutos de build são limitados no plano gratuito e, sem cartão cadastrado, estourar
-  **desativa novos builds até o fim do mês**. São três imagens (a da inferência tem ~700 MB)
-  a cada push: verifique na especificação do Blueprint os filtros de build por serviço (ou
-  desligar o deploy automático) e, com o deploy no ar, agrupe os pushes.
+- Minutos de build são limitados e, sem cartão cadastrado, estourar **desativa novos builds
+  até o fim do mês**. O rascunho usa `buildFilter` por serviço; ainda assim, agrupe os pushes
+  depois que o deploy estiver no ar.
+- Banda de saída também é limitada; sem cartão, estourar suspende os serviços gratuitos.
 - A documentação avisa que alto volume de tráfego iniciado pelo serviço pode suspendê-lo:
   não faça polling agressivo nem pings periódicos para manter serviços acordados.
 
-`render.yaml` (Blueprint) na raiz: `type: web`, `runtime: docker`, `plan: free`,
-`region: virginia` (mesma região do Neon), `dockerContext: .`,
-`dockerfilePath: ./<servico>/Dockerfile`, `healthCheckPath: /saude`; `type: keyvalue`,
-`plan: free`, `ipAllowList: []`, `maxmemoryPolicy: noeviction`. Segredos compartilhados em
-`envVarGroups` com `generateValue: true` (`TOKEN_INTERNO`); o que vem de fora com
-`sync: false`. `URL_INFERENCIA` e `URL_WORKER` precisam ser as URLs **públicas**
-`https://….onrender.com`: `fromService` com `property: host`/`hostport` devolve endereço de
-rede privada, que serviço gratuito não recebe. Confirme na especificação atual como
-referenciar o Key Value e as URLs, e valide o arquivo antes (`render blueprints validate`, se o CLI existir).
+## Blueprint
+
+[render.yaml.rascunho](render.yaml.rascunho) passou no `render blueprints validate`. Isso
+confirma o esquema, não o comportamento: confira em execução se `URL_INFERENCIA` e
+`URL_WORKER` (via `envVarKey: RENDER_EXTERNAL_URL`) chegam como URLs públicas
+`https://….onrender.com`. Não troque por `property: host`/`hostport`, que são endereços de
+rede privada. Mova o arquivo para `./render.yaml`, ajuste ao código e valide de novo.
 
 ## Passos que dependem do usuário
 
-1. Criar contas Render e Honeycomb; criar o projeto Neon (ou autorizar você a criá-lo com
-   `neonctl`, Postgres 17, `aws-us-east-1`, sem tocar nos projetos existentes).
-2. No Render: New → Blueprint → este repositório → preencher as variáveis `sync: false`
-   (`DATABASE_URL`, `OTEL_EXPORTER_OTLP_HEADERS`, `SENHA_DEMO`, …).
-   O usuário digita os segredos no painel; não peça que os cole no chat.
-3. O código precisa estar no GitHub (`main`); o Render publica a cada push.
+1. Conectar o GitHub ao Render no navegador (links em `TAREFAS.md`). O agente não consegue
+   fazer isso.
+2. Criar o Blueprint: no painel, New → Blueprint → este repositório; ou, com confirmação do
+   usuário, `render ea blueprints create` (recurso em acesso antecipado).
+3. Preencher no painel as variáveis `sync: false`:
+   - `OTEL_EXPORTER_OTLP_HEADERS` = `x-honeycomb-team=<chave>` (o par chave=valor, não só a
+     chave), nos três serviços. Use uma **Ingest key**.
+   - `SENHA_DEMO`: senha forte e exclusiva.
 
-Honeycomb: `OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io`,
-`OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=<chave>`.
+   O usuário digita os segredos no painel; não peça que os cole no chat nem os grave no
+   repositório.
+4. O código precisa estar no GitHub (`main`); o Render publica a cada push.
+
+Honeycomb (região US): `OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io`. Localmente não
+é preciso chave: o compose usa o Jaeger.
 
 ## Aceite do deploy
 
 Com a URL pública: `/saude` 200; rota protegida sem token 401; login; `/predict`;
 `/documentos` → tarefa `concluida`; `/buscar`; `/perguntar`; `http://` redireciona; repetir
 depois de 15+ min ociosos; trace completo no Honeycomb; logs do painel sem dado pessoal;
-inferência e worker recusam chamada sem token interno.
+inferência e worker recusam chamada sem token interno. Informe ao usuário a data em que o
+banco gratuito expira.

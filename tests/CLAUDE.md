@@ -11,6 +11,8 @@ já vem desligado por padrão no `pyproject.toml`).
   do código.
 - Modelos prontos do C2 em `referencia/c2a2/tests/` (disjuntor, retentativa, fila, DLQ,
   busca, e2e com `docker compose stop`). Adapte os imports.
+- O `TestClient` do Starlette atual avisa que o uso com `httpx` está obsoleto e sugere
+  `httpx2`. É só aviso; se trocar, confira o pacote antes.
 - Crie um `conftest.py` que force LLM simulado, exporter desligado e segredos de teste. Vários
   módulos importados leem o ambiente **no import**: use `monkeypatch.setattr` no atributo.
 - Cubra os riscos do projeto: propagação do `traceparent` pela mensagem; logs sem texto nem IP

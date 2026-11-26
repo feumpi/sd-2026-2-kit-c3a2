@@ -61,7 +61,8 @@ LGPD no README, relatório de trade-offs e código organizado em diretórios no 
   deploy pela primeira vez, qualquer coisa que gere custo.
 - **Nunca tocar** em recursos que não são deste trabalho: projetos de nuvem ou de banco já
   existentes e containers Docker alheios. Há CLIs autenticadas na máquina apontando para
-  outros projetos: não as use para ler nem alterar nada deles. Este trabalho não usa GCP.
+  outros projetos: não as use para ler nem alterar nada deles. Este trabalho não usa GCP nem
+  Neon.
 
 ### Commits (obrigatório)
 
@@ -100,7 +101,7 @@ cliente ──HTTPS/JWT────> │ login · jwt · rate limit · roteament
 | `gateway` | compose | Render web service | kit |
 | `inferencia` | compose | Render web service | C1 modelo; C2 embeddings, busca, geração, LLM |
 | `worker` | compose | Render **web** service (consumidor em thread) | C2 fila e worker; C1 processamento |
-| `vetorial` | `pgvector/pgvector:pg17` | Neon (Postgres 17) | substitui o índice JSON do C2 |
+| `vetorial` | `pgvector/pgvector:pg17` | Render Postgres free (17) | substitui o índice JSON do C2 |
 | fila | `redis:7-alpine` | Render Key Value free | C1/C2 |
 | traces | Jaeger `jaegertracing/jaeger:2.23.0` | Honeycomb | — |
 
@@ -166,7 +167,8 @@ docs/         edital, ebook, diário, trade-offs (a criar)
 
 Arquivos importados estão **sem alteração** (commit `chore: importa código reaproveitado…`):
 os imports ainda apontam para `app.` e `servicos.` e precisam ser adaptados. Por isso o
-`ruff check` acusa hoje 2 avisos I001 (`inferencia/modelo.py`, `worker/worker.py`).
+`ruff check` acusa hoje 2 avisos I001 (`inferencia/modelo.py`, `worker/worker.py`) e o
+`pyright` acusa erros nesses arquivos importados.
 
 ## Ambiente (verificado em 26/11/2026)
 
@@ -176,12 +178,11 @@ os imports ainda apontam para `app.` e `servicos.` e precisam ser adaptados. Por
   `open -a Docker` e aguarde. Se um build estourar memória, peça ao usuário para aumentar.
 - Imagens já baixadas: `python:3.12-slim`, `redis:7-alpine`, `pgvector/pgvector:pg17`,
   `jaegertracing/jaeger:2.23.0`, `ghcr.io/astral-sh/uv:0.13.7`.
-- `neonctl` autenticado. Crie um projeto **novo**, com confirmação do usuário (inclusive de
-  em qual organização).
 - Sem `redis-cli`/`psql` locais: use `docker compose exec`.
-- CLI `render` 2.39.0 instalado e autenticado (tem `render blueprints validate`). A conta pode
-  ter outros serviços: mexa só nos deste trabalho.
-- Opcional: `pyright` (usado pelo plugin LSP) não estava instalado.
+- CLI `render` 2.39.0 autenticado, workspace ativo já definido, sem serviços em 26/11/2026.
+  A conta pode ganhar outros recursos: mexa só nos deste trabalho. Não há MCP do Render
+  configurado (o CLI basta; o plugin oficial é `render@claude-plugins-official`).
+- `pyright` 1.1.414 instalado com `vp install -g pyright`; configurado no `pyproject.toml`.
 - Portas 6379, 8000–8002 e 16686 estavam livres.
 - Remoto: `origin = github.com/feumpi/sd-2026-2-kit-c3a2` (fork público do kit, em dia).
 
@@ -209,3 +210,8 @@ funcionam** (faltam os Dockerfiles dos outros serviços).
 Código no GitHub, README completo, URL pública no ar. No AVA vai **apenas o link do
 repositório**; lembre o usuário disso. Trabalho individual (Felipe Umpierre). Não copiar
 projetos de colegas.
+
+**Credenciais do ambiente publicado** (decisão do usuário): nunca no repositório, no README
+ou no AVA. O usuário as envia por e-mail ao professor (endereço no edital). O README informa
+isso e documenta os padrões que valem apenas no compose local. Não envie e-mail por conta
+própria.

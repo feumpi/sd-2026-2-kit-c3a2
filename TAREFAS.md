@@ -35,15 +35,19 @@ diário atualizados, e commit.
 - [x] Imagens base baixadas e instalação por grupo testada em Docker
 - [x] `CLAUDE.md` (raiz e subdiretórios), `.env.example` e este arquivo
 
-### Pendências do usuário (só ele pode fazer; necessárias a partir da Tarefa 5)
+### Pendências do usuário (necessárias a partir da Tarefa 5)
 
 - [x] Conta no [Render](https://render.com) e CLI `render` autenticado
-- [ ] No Render, GitHub conectado com acesso a este repositório
-- [ ] Projeto **novo** no Neon, Postgres 17, região `aws-us-east-1`; guardar a connection string
-      (nunca reutilizar projetos existentes; escolher em qual organização criar)
-- [ ] Conta no [Honeycomb](https://www.honeycomb.io) (plano gratuito, região US) e uma API key
-- [ ] Definir usuário e senha de demonstração do ambiente publicado e decidir se vão no README
-      (o professor precisa conseguir testar, e no AVA vai só o link do repositório)
+- [ ] GitHub conectado ao Render (só pelo navegador):
+      [Account Security](https://dashboard.render.com/u/settings#account-security) →
+      *Git Deployment Credentials* → *Add credential* → GitHub; depois
+      [dar acesso](https://github.com/apps/render/installations/new) apenas a este repositório
+- [x] Conta no [Honeycomb](https://ui.honeycomb.io), região US
+- [ ] Criar uma **Ingest API key** (Environments → Manage Environments → API Keys → Ingest);
+      ela só aparece uma vez e será colada no painel do Render na Tarefa 5
+- [ ] Depois do deploy, enviar usuário e senha do ambiente publicado ao professor por e-mail
+
+O banco publicado é criado pelo Blueprint na Tarefa 5 (não criar antes: expira em 30 dias).
 
 ## Núcleo obrigatório
 
@@ -103,7 +107,7 @@ O sistema inteiro deve subir com UM comando. (Aula 14)
 Publicar e informar a URL publica no README. (Aula 13)
 
 - [ ] `render.yaml` (Blueprint): gateway, inferência, worker e Key Value no Render
-- [ ] Armazenamento vetorial no Neon; traces no Honeycomb
+- [ ] Armazenamento vetorial no Postgres gratuito do Render; traces no Honeycomb
 - [ ] Segredos só no painel; nada sensível no repositório
 - [ ] URL pública no README
 - **Aceite:** fluxo completo (login → documento → tarefa → busca → pergunta) na URL pública,
@@ -152,7 +156,8 @@ CAP, custo e latencia do seu sistema.
 ### [ ] F2. README do projeto (R9.2)
 
 - [ ] Arquitetura (diagrama), como executar do zero, rotas com exemplos, variáveis de ambiente
-- [ ] URL pública, credenciais de demonstração (conforme decisão do usuário), LGPD, trade-offs
+- [ ] URL pública, LGPD, trade-offs; aviso de que as credenciais do ambiente publicado
+      foram enviadas ao professor por e-mail (**sem** colocá-las no repositório)
 - [ ] Aviso de que, no ambiente publicado, a primeira requisição após inatividade pode levar
       de 1 a 2 minutos
 - [ ] Créditos ao kit do Prof. Howard Roatti
@@ -162,6 +167,7 @@ CAP, custo e latencia do seu sistema.
 - [ ] Remover `referencia/` e os `README.md` de espera em `inferencia/` e `worker/`
 - [ ] Clone em OUTRA máquina (ou diretório limpo) e rode o comando unico seguindo só o README
 - [ ] A URL publica esta no ar?
+- [ ] Usuário confirmou o envio das credenciais ao professor por e-mail
 - [ ] Toda configuracao esta em variavel de ambiente (nada fixo no codigo)?
 - [ ] Os logs estao livres de dados pessoais?
 - [ ] `uv run pytest`, `uv run pytest -m e2e` e `uv run ruff check .` verdes
