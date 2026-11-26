@@ -37,7 +37,8 @@ diário atualizados, e commit.
 
 ### Pendências do usuário (só ele pode fazer; necessárias a partir da Tarefa 5)
 
-- [ ] Conta no [Render](https://render.com) com o GitHub conectado a este repositório
+- [x] Conta no [Render](https://render.com) e CLI `render` autenticado
+- [ ] No Render, GitHub conectado com acesso a este repositório
 - [ ] Projeto **novo** no Neon, Postgres 17, região `aws-us-east-1`; guardar a connection string
       (nunca reutilizar projetos existentes; escolher em qual organização criar)
 - [ ] Conta no [Honeycomb](https://www.honeycomb.io) (plano gratuito, região US) e uma API key

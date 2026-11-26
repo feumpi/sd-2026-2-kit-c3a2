@@ -179,7 +179,9 @@ os imports ainda apontam para `app.` e `servicos.` e precisam ser adaptados. Por
 - `neonctl` autenticado. Crie um projeto **novo**, com confirmação do usuário (inclusive de
   em qual organização).
 - Sem `redis-cli`/`psql` locais: use `docker compose exec`.
-- Opcionais, confira se foram instalados: `render` (CLI) e `pyright` (usado pelo plugin LSP).
+- CLI `render` 2.39.0 instalado e autenticado (tem `render blueprints validate`). A conta pode
+  ter outros serviços: mexa só nos deste trabalho.
+- Opcional: `pyright` (usado pelo plugin LSP) não estava instalado.
 - Portas 6379, 8000–8002 e 16686 estavam livres.
 - Remoto: `origin = github.com/feumpi/sd-2026-2-kit-c3a2` (fork público do kit, em dia).
 

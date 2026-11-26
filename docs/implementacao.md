@@ -83,6 +83,7 @@ escolhas simples e de reuso.
 - `pgvector/pgvector:pg17` subiu, criou a extensão e calculou distância; Jaeger 2.23.0 subiu.
   Ociosos, cerca de 100 MB e 90 MB: os 2 GB do Docker devem bastar.
 - Modelo e embeddings no processo local: cerca de 110 MB, abaixo dos 512 MB do Render.
+- CLI do Render 2.39.0 instalado e autenticado pelo usuário durante a preparação.
 - `ruff check`: 2 avisos I001 em arquivos importados, que somem na adaptação.
 - **Não verificado:** compose completo, Dockerfiles finais e qualquer coisa na nuvem. Os fatos
   sobre o Render vêm da documentação, não de um deploy. Comportamentos descritos nos
