@@ -34,8 +34,9 @@ modelo: ModeloSentimento | None = None
 vetorizador = Vetorizador()
 repositorio = Repositorio()
 
-# o prazo total precisa ficar abaixo do tempo-limite do gateway, senao ele desiste antes
-LLM_PRAZO_TOTAL = float(os.getenv("LLM_PRAZO_TOTAL", "8"))
+# busca no banco (DB_TIMEOUT) + LLM precisam caber no tempo-limite do gateway, senao ele
+# desiste antes
+LLM_PRAZO_TOTAL = float(os.getenv("LLM_PRAZO_TOTAL", "4"))
 RETENTATIVAS = int(os.getenv("RETENTATIVAS", "3"))
 BACKOFF_BASE = float(os.getenv("BACKOFF_BASE", "0.5"))
 disjuntor_llm = CircuitBreaker(limite_falhas=int(os.getenv("LIMITE_FALHAS", "3")),

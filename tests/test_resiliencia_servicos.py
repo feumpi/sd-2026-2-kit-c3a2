@@ -1,6 +1,7 @@
 """TAREFA 6: disjuntores, retentativas e tempo-limite nas tres chamadas remotas."""
 # pyright: reportOptionalSubscript=false
 import json
+import os
 import threading
 
 import fakeredis
@@ -189,8 +190,9 @@ def test_llm_fora_abre_o_disjuntor_e_degrada_com_os_trechos(perguntar, remoto):
     assert servico.disjuntor_llm.estado == "aberto"
 
 
-def test_prazo_do_llm_cabe_no_tempo_limite_do_gateway():
-    assert servico.LLM_PRAZO_TOTAL < do_gateway.TIMEOUT
+def test_busca_mais_llm_cabem_no_tempo_limite_do_gateway():
+    tempo_do_banco = float(os.getenv("DB_TIMEOUT", "5"))
+    assert tempo_do_banco + servico.LLM_PRAZO_TOTAL < do_gateway.TIMEOUT
 
 
 def test_retentativa_sem_tempo_limite_nao_passa_o_argumento():

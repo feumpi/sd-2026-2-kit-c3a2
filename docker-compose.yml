@@ -77,7 +77,7 @@ services:
       LLM_API_URL: ${LLM_API_URL:-https://api.openai.com/v1/chat/completions}
       LLM_MODELO: ${LLM_MODELO:-gpt-4o-mini}
       LLM_TIMEOUT: ${LLM_TIMEOUT:-5}
-      LLM_PRAZO_TOTAL: ${LLM_PRAZO_TOTAL:-8}
+      LLM_PRAZO_TOTAL: ${LLM_PRAZO_TOTAL:-4}
     depends_on:
       vetorial: {condition: service_healthy}
     healthcheck:
