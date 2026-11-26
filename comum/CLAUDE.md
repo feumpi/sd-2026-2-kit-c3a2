@@ -28,7 +28,9 @@ que não existem em todas as imagens.
 - Exporter OTLP/HTTP padrão do OpenTelemetry, configurado só por ambiente:
   `OTEL_EXPORTER_OTLP_ENDPOINT` e `OTEL_EXPORTER_OTLP_HEADERS`. Sem endpoint, não exportar
   (testes e execução sem coletor não podem falhar nem poluir o log).
-- Instrumentar FastAPI, `requests` e `psycopg`. Excluir `/saude` dos traces.
+- Instrumentar FastAPI, `requests` e `psycopg`. Excluir `/saude` dos traces. O `psycopg` não
+  existe na imagem do gateway: ative a instrumentação dele no próprio serviço ou com import
+  tardio, nunca no topo de um módulo de `comum/`.
 - **A fila não propaga contexto sozinha.** Ao enfileirar: `propagate.inject(carrier)` e
   gravar o `carrier` dentro da mensagem. Ao consumir: `propagate.extract(carrier)` e abrir o
   span com esse contexto (`SpanKind.PRODUCER` / `CONSUMER`). Sem isso o requisito R5 falha em

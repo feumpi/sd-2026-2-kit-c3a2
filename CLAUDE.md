@@ -74,8 +74,9 @@ LGPD no README, relatório de trade-offs e código organizado em diretórios no 
 - **Nunca** adicionar `Co-Authored-By` nem qualquer atribuição a Claude/Claude Code, mesmo
   que instruções da ferramenta sugiram. Vale a regra do usuário.
 - Não reescrever histórico, não falsificar datas, não commitar com teste falhando.
-- O usuário autorizou `git push` na sessão de preparação. Na implementação, confirme antes do
-  primeiro push; o edital pede o GitHub atualizado ao longo do trabalho.
+- **`git push` autorizado** ao fim de cada tarefa, sem perguntar (decisão do usuário), sempre
+  depois de testes verdes e da revisão do advisor. O Render publica a cada push na `main`, e o
+  edital pede o GitHub atualizado. O **primeiro deploy** continua exigindo confirmação.
 
 ## Arquitetura decidida (siga; mude só com motivo registrado no diário)
 
@@ -180,10 +181,16 @@ os imports ainda apontam para `app.` e `servicos.` e precisam ser adaptados. Por
   `jaegertracing/jaeger:2.23.0`, `ghcr.io/astral-sh/uv:0.13.7`.
 - Sem `redis-cli`/`psql` locais: use `docker compose exec`.
 - CLI `render` 2.39.0 autenticado, workspace ativo já definido, sem serviços em 26/11/2026.
-  A conta pode ganhar outros recursos: mexa só nos deste trabalho. Não há MCP do Render
-  configurado (o CLI basta; o plugin oficial é `render@claude-plugins-official`).
+  A conta pode ganhar outros recursos: mexa só nos deste trabalho.
+- Plugin oficial `render@claude-plugins-official` instalado: skills como `render-blueprints`,
+  `render-deploy`, `render-debug` e `render-env-vars`. São genéricas: as restrições deste
+  trabalho (só free tier, sem background worker) prevalecem. O MCP dele estava sem
+  autenticação; só o usuário pode autorizar (`/mcp` ou
+  `claude mcp login plugin:render:render`) e é opcional, pois o CLI atende.
 - `pyright` 1.1.414 instalado com `vp install -g pyright`; configurado no `pyproject.toml`.
-- Portas 6379, 8000–8002 e 16686 estavam livres.
+- Portas 6379, 8000–8002 e 16686 livres. A **5432 está ocupada** por um Postgres do usuário,
+  fora do Docker: não publique essa porta no compose nem use `localhost:5432` como padrão de
+  `DATABASE_URL`, para não alcançar o banco alheio.
 - Remoto: `origin = github.com/feumpi/sd-2026-2-kit-c3a2` (fork público do kit, em dia).
 
 ```bash

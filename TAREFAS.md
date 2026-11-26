@@ -38,13 +38,11 @@ diário atualizados, e commit.
 ### Pendências do usuário (necessárias a partir da Tarefa 5)
 
 - [x] Conta no [Render](https://render.com) e CLI `render` autenticado
-- [ ] GitHub conectado ao Render (só pelo navegador):
-      [Account Security](https://dashboard.render.com/u/settings#account-security) →
-      *Git Deployment Credentials* → *Add credential* → GitHub; depois
-      [dar acesso](https://github.com/apps/render/installations/new) apenas a este repositório
+- [x] GitHub conectado ao Render, com o app instalado no repositório (confirmado pelo usuário;
+      verificado de fato ao criar o Blueprint)
 - [x] Conta no [Honeycomb](https://ui.honeycomb.io), região US
-- [ ] Criar uma **Ingest API key** (Environments → Manage Environments → API Keys → Ingest);
-      ela só aparece uma vez e será colada no painel do Render na Tarefa 5
+- [ ] Na Tarefa 5, quando o Blueprint mostrar os campos no painel: criar a **Ingest API key** do
+      Honeycomb e preenchê-la (decisão do usuário: não criar antes)
 - [ ] Depois do deploy, enviar usuário e senha do ambiente publicado ao professor por e-mail
 
 O banco publicado é criado pelo Blueprint na Tarefa 5 (não criar antes: expira em 30 dias).

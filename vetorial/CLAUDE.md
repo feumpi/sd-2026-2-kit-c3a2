@@ -41,6 +41,10 @@ pequeno: não precisa de índice HNSW.
 - Na nuvem o banco só é acessível pela rede privada (`ipAllowList: []`): o esquema é aplicado
   pelo worker na subida, não à mão.
 - `CREATE EXTENSION vector` é suportado pelo Render.
+- Não publique `5432:5432` (porta ocupada por outro banco no host). Se precisar depurar, use
+  `5433:5432`. O padrão de `DATABASE_URL` no código nunca aponta para `localhost:5432`.
+- Na nuvem a inferência pode subir antes de o worker aplicar o esquema, e `register_vector`
+  falha sem a extensão: registre o tipo sob demanda e trate como resultado vazio.
 - Healthcheck no compose: `pg_isready -h 127.0.0.1` (pelo socket ele responde "pronto" ainda
   durante a inicialização).
 - Postgres 17 nos dois ambientes (imagem `pg17`; `postgresMajorVersion: "17"` no Blueprint,

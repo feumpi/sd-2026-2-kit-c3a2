@@ -32,7 +32,8 @@ CMD ["sh", "-c", "exec uvicorn gateway.app:app --host 0.0.0.0 --port ${PORT:-800
 - Serviços: `redis`, `vetorial`, `inferencia`, `worker`, `gateway`, `jaeger`.
 - Healthchecks e `depends_on: condition: service_healthy`; `restart: unless-stopped`. A
   imagem slim não tem curl: use `python -c` com `urllib`.
-- Portas no host: só 8000 e 16686. Endereços por nome de serviço.
+- Portas no host: só 8000 e 16686. Endereços por nome de serviço. Nunca `5432:5432`: o host
+  já tem um Postgres nessa porta.
 - Jaeger recebe OTLP/HTTP em `http://jaeger:4318`; interface em `localhost:16686`.
 
 ## Render + Honeycomb
@@ -63,17 +64,21 @@ Fatos conferidos na documentação do Render em 26/11/2026 (reconfira se algo di
 confirma o esquema, não o comportamento: confira em execução se `URL_INFERENCIA` e
 `URL_WORKER` (via `envVarKey: RENDER_EXTERNAL_URL`) chegam como URLs públicas
 `https://….onrender.com`. Não troque por `property: host`/`hostport`, que são endereços de
-rede privada. Mova o arquivo para `./render.yaml`, ajuste ao código e valide de novo.
+rede privada. Mova o arquivo para `./render.yaml`, ajuste ao código e valide de novo. A partir
+daí o plugin do Render roda `render blueprints validate` a cada edição desse arquivo (o
+`.rascunho` não aciona).
 
 ## Passos que dependem do usuário
 
-1. Conectar o GitHub ao Render no navegador (links em `TAREFAS.md`). O agente não consegue
-   fazer isso.
-2. Criar o Blueprint: no painel, New → Blueprint → este repositório; ou, com confirmação do
+1. GitHub conectado ao Render: **feito** (informado pelo usuário em 26/11; só se confirma de
+   fato ao criar o Blueprint). Se o repositório não aparecer, peça para revisar o acesso do app.
+2. Com o `render.yaml` já na `main`, criar o Blueprint: no painel, New → Blueprint → este repositório; ou, com confirmação do
    usuário, `render ea blueprints create` (recurso em acesso antecipado).
-3. Preencher no painel as variáveis `sync: false`:
+3. Só então, com os campos à vista no painel, pedir ao usuário que crie a **Ingest key** no
+   Honeycomb (Environments → Manage Environments → API Keys → Ingest; aparece uma única vez) e
+   preencha as variáveis `sync: false`:
    - `OTEL_EXPORTER_OTLP_HEADERS` = `x-honeycomb-team=<chave>` (o par chave=valor, não só a
-     chave), nos três serviços. Use uma **Ingest key**.
+     chave), nos três serviços.
    - `USUARIO_DEMO` e `SENHA_DEMO` (senha forte e exclusiva), no gateway.
 
    O usuário digita os segredos no painel; não peça que os cole no chat nem os grave no

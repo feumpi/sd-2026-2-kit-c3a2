@@ -51,4 +51,5 @@ dispara em segundo plano (sem bloquear a resposta) um `GET /saude`:
 A **inferência também dorme**. Com `TIMEOUT_INFERENCIA=10`, as chamadas síncronas dariam 503
 durante o despertar e ainda abririam o disjuntor, justamente na primeira requisição de quem
 for avaliar. Na nuvem, use um valor que cubra o cold start (da ordem de 75 a 90 s, conforme o
-medido) e confira o comportamento depois de 15+ min ociosos.
+medido) e confira o comportamento depois de 15+ min ociosos. Tempo-limite longo multiplicado
+por 3 retentativas deixaria o cliente esperando vários minutos: limite o tempo total.
