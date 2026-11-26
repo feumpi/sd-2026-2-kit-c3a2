@@ -27,6 +27,8 @@ x-comum: &comum
 x-resiliencia: &resiliencia
   TIMEOUT_CONEXAO: ${TIMEOUT_CONEXAO:-5}
   TIMEOUT_INFERENCIA: ${TIMEOUT_INFERENCIA:-10}
+  # teto somando as retentativas (vazio = 1,5 x TIMEOUT_INFERENCIA)
+  PRAZO_INFERENCIA: ${PRAZO_INFERENCIA:-}
   RETENTATIVAS: ${RETENTATIVAS:-3}
   BACKOFF_BASE: ${BACKOFF_BASE:-0.5}
   LIMITE_FALHAS: ${LIMITE_FALHAS:-3}
@@ -75,6 +77,7 @@ services:
       LLM_API_URL: ${LLM_API_URL:-https://api.openai.com/v1/chat/completions}
       LLM_MODELO: ${LLM_MODELO:-gpt-4o-mini}
       LLM_TIMEOUT: ${LLM_TIMEOUT:-5}
+      LLM_PRAZO_TOTAL: ${LLM_PRAZO_TOTAL:-8}
     depends_on:
       vetorial: {condition: service_healthy}
     healthcheck:

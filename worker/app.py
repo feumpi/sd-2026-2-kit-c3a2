@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from comum import contrato, web
 from vetorial.repositorio import Repositorio
+from worker import inferencia
 from worker.worker import consumir
 
 web.configurar_logs()
@@ -46,4 +47,5 @@ def saude():
     vivo = thread is not None and thread.is_alive()
     return JSONResponse(status_code=200 if vivo else 503,
                         content={"status": "ok" if vivo else "consumidor parado",
-                                 "consumidor_vivo": vivo})
+                                 "consumidor_vivo": vivo,
+                                 "disjuntores": {"inferencia": inferencia.disjuntor.estado}})

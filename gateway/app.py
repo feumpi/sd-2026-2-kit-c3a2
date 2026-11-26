@@ -56,7 +56,8 @@ def inicio():
 
 @app.get("/saude")
 def saude():
-    return {"status": "ok"}
+    """Rapido e sem chamar ninguem: so mostra o estado dos disjuntores."""
+    return {"status": "ok", "disjuntores": {"inferencia": inferencia.disjuntor.estado}}
 
 
 @protegidas.post("/predict")

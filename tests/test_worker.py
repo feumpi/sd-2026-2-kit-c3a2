@@ -127,6 +127,7 @@ def test_fila_vazia(r, repo, parar):
 @pytest.mark.parametrize("erro", [requests.Timeout(), requests.ConnectionError(),
                                   erro_http(503), erro_http(502), erro_http(429)])
 def test_falha_transitoria_nao_gasta_tentativa(r, repo, parar, monkeypatch, erro):
+    monkeypatch.setattr(worker, "BACKOFF_BASE", 0.5)
     falhar_com(monkeypatch, erro)
     tarefa_id = contrato.enfileirar(r, DOC)
     rodar(r, repo, parar, vezes=worker.MAX_TENTATIVAS * 4)

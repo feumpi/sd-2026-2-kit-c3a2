@@ -4,7 +4,8 @@ Consumidor da fila (Aula 8): pede o processamento a inferencia e grava no banco 
 E o unico escritor do banco. Reprocessar e seguro porque a gravacao e idempotente.
 
 Falhas:
-  - transitoria (tempo-limite, conexao, 5xx, 429, banco fora): espera e reenfileira SEM
+  - transitoria (tempo-limite, conexao, 5xx, 429, circuito aberto, banco fora): espera e
+    reenfileira SEM
     gastar tentativa; so vai a dead-letter ao passar de TAREFA_IDADE_MAXIMA. Assim o cold
     start da inferencia nao descarta tarefas boas;
   - permanente (4xx, erro nos dados): ate MAX_TENTATIVAS, depois dead-letter;
@@ -19,6 +20,7 @@ import time
 
 import redis
 
+from comum.circuit_breaker import CircuitoAberto
 from comum.resiliencia import eh_transitoria
 from comum.web import onde_falhou
 from vetorial.repositorio import BancoIndisponivel, EsquemaAusente
@@ -62,11 +64,13 @@ def executar(tarefa: dict, repositorio) -> dict:
 
 
 def falha_transitoria(erro: Exception) -> bool:
-    return isinstance(erro, BancoIndisponivel) or eh_transitoria(erro)
+    return isinstance(erro, (BancoIndisponivel, CircuitoAberto)) or eh_transitoria(erro)
 
 
 def espera_do_adiamento(adiamentos: int, erro: Exception) -> float:
-    """Backoff exponencial com teto e jitter."""
+    """Backoff exponencial com teto e jitter; com circuito aberto, o tempo que ele pede."""
+    if isinstance(erro, CircuitoAberto):
+        return max(1.0, inferencia.disjuntor.segundos_para_tentar())
     espera = min(BACKOFF_BASE * 2 ** min(adiamentos - 1, 10), ESPERA_MAXIMA)
     return espera + random.uniform(0, BACKOFF_BASE)
 

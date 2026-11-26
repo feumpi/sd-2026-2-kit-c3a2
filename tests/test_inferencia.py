@@ -128,13 +128,13 @@ def test_perguntar_responde_em_modo_simulado_com_fontes(cliente):
 
 def test_sem_base_nao_chama_o_llm(cliente, repo, monkeypatch):
     repo.resultado = []
-    monkeypatch.setattr(llm, "gerar", lambda *a: pytest.fail("nao deveria chamar"))
+    monkeypatch.setattr(llm, "gerar", lambda *a, **k: pytest.fail("nao deveria chamar"))
     corpo = cliente.post("/perguntar", json={"pergunta": "assunto inexistente"}).json()
     assert corpo == {"resposta": inferencia.SEM_BASE, "contexto": [], "fontes": []}
 
 
 def test_llm_com_erro_degrada_com_trechos(cliente, monkeypatch):
-    def quebra(*a):
+    def quebra(*a, **k):
         raise OSError("fora")
     monkeypatch.setattr(llm, "gerar", quebra)
     r = cliente.post("/perguntar", json={"pergunta": "teorema CAP"})

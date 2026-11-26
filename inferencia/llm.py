@@ -26,7 +26,7 @@ def _simulado(pergunta, contexto):
     )
 
 
-def gerar(pergunta: str, contexto: list) -> str:
+def gerar(pergunta: str, contexto: list, tempo_limite: float | None = None) -> str:
     """Monta o prompt com o contexto recuperado e chama o LLM."""
     if not API_KEY:
         return _simulado(pergunta, contexto)
@@ -42,7 +42,7 @@ def gerar(pergunta: str, contexto: list) -> str:
         json={"model": MODELO,
               "messages": [{"role": "user", "content": prompt}],
               "temperature": 0.2},
-        timeout=TIMEOUT,
+        timeout=tempo_limite or TIMEOUT,
     )
     resposta.raise_for_status()
     return resposta.json()["choices"][0]["message"]["content"]

@@ -7,15 +7,19 @@ Servico de inferencia: unico lugar com modelo, embeddings e LLM (Aula 6).
   POST /perguntar  RAG: resposta fundamentada nos documentos, com as fontes
   GET  /saude      estado do servico (unica rota sem token interno)
 
-Le o banco vetorial, nunca grava. Falha de dependencia vira 503 com `degradado: true`.
+Le o banco vetorial, nunca grava. A chamada ao LLM tem tempo-limite, retentativa e
+disjuntor (Aula 11). Falha de dependencia vira 503 com `degradado: true`.
 """
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 
 from comum import web
+from comum.circuit_breaker import CircuitBreaker, CircuitoAberto
 from comum.modelos import Consulta, EntradaTexto
+from comum.resiliencia import com_retentativa
 from inferencia import llm
 from inferencia.embeddings import Vetorizador
 from inferencia.modelo import ModeloSentimento, carregar_modelo
@@ -29,6 +33,13 @@ SEM_BASE = "Nao encontrei nos documentos indexados nada sobre essa pergunta."
 modelo: ModeloSentimento | None = None
 vetorizador = Vetorizador()
 repositorio = Repositorio()
+
+# o prazo total precisa ficar abaixo do tempo-limite do gateway, senao ele desiste antes
+LLM_PRAZO_TOTAL = float(os.getenv("LLM_PRAZO_TOTAL", "8"))
+RETENTATIVAS = int(os.getenv("RETENTATIVAS", "3"))
+BACKOFF_BASE = float(os.getenv("BACKOFF_BASE", "0.5"))
+disjuntor_llm = CircuitBreaker(limite_falhas=int(os.getenv("LIMITE_FALHAS", "3")),
+                               espera_segundos=float(os.getenv("ESPERA_DISJUNTOR", "20")))
 
 
 @asynccontextmanager
@@ -95,6 +106,13 @@ def buscar(consulta: Consulta):
         return banco_fora(erro)
 
 
+def gerar_resposta(pergunta: str, contexto: list) -> str:
+    """Gerar nao tem efeito colateral: pode ser repetido."""
+    tentar = com_retentativa(llm.gerar, tentativas=RETENTATIVAS, base=BACKOFF_BASE,
+                             prazo_total=LLM_PRAZO_TOTAL, tempo_limite=llm.TIMEOUT)
+    return disjuntor_llm.chamar(tentar, pergunta, contexto)
+
+
 @app.post("/perguntar")
 def perguntar(consulta: Consulta):
     try:
@@ -106,10 +124,12 @@ def perguntar(consulta: Consulta):
     if not contexto:
         return {"resposta": SEM_BASE, "contexto": [], "fontes": []}
     try:
-        resposta = llm.gerar(consulta.pergunta, contexto)
+        resposta = gerar_resposta(consulta.pergunta, contexto)
     except Exception as erro:
-        log.warning("falha ao chamar o LLM: %s", type(erro).__name__)
+        if not isinstance(erro, CircuitoAberto):
+            log.warning("falha ao chamar o LLM: %s", type(erro).__name__)
         return web.indisponivel("LLM indisponivel no momento; seguem os trechos recuperados",
+                                espera=disjuntor_llm.segundos_para_tentar() or 5,
                                 degradado=True, contexto=contexto, fontes=fontes)
     return {"resposta": resposta, "contexto": contexto, "fontes": fontes}
 
@@ -117,4 +137,5 @@ def perguntar(consulta: Consulta):
 @app.get("/saude")
 def saude():
     return {"status": "ok", "modelo_carregado": modelo is not None,
-            "llm": "api" if llm.API_KEY else "simulado"}
+            "llm": "api" if llm.API_KEY else "simulado",
+            "disjuntores": {"llm": disjuntor_llm.estado}}

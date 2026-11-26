@@ -35,7 +35,8 @@ def remoto(monkeypatch):
 
     def post(url, **argumentos):
         estado["chamadas"].append((url, argumentos))
-        item = estado["respostas"].pop(0)
+        respostas = estado["respostas"]  # a ultima se repete nas retentativas
+        item = respostas.pop(0) if len(respostas) > 1 else respostas[0]
         if isinstance(item, Exception):
             raise item
         return item
