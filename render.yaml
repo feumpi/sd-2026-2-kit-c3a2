@@ -1,6 +1,6 @@
-# Rascunho do Blueprint, validado com `render blueprints validate` em 26/11/2026.
-# Validou-se so o esquema: nada foi criado. Na Tarefa 5, mover para ./render.yaml,
-# conferir contra o codigo e validar de novo.
+# Blueprint do Render: 3 web services, 1 Postgres e 1 Key Value, todos no plano free.
+# Instrucoes em deploy/INSTRUCOES.md. Os campos `sync: false` sao preenchidos no painel e
+# nunca vao para o repositorio.
 # Atencao: o Postgres gratuito expira 30 dias apos a criacao.
 
 databases:
@@ -15,6 +15,22 @@ envVarGroups:
     envVars:
       - key: TOKEN_INTERNO
         generateValue: true
+
+  # tempo-limite e resiliencia na nuvem: cobrem o cold start (~1 min) dos servicos gratuitos
+  - name: c3a2-resiliencia
+    envVars:
+      - key: TIMEOUT_INFERENCIA
+        value: "90"
+      - key: PRAZO_INFERENCIA
+        value: "120"
+      - key: RETENTATIVAS
+        value: "3"
+      - key: BACKOFF_BASE
+        value: "1"
+      - key: LIMITE_FALHAS
+        value: "3"
+      - key: ESPERA_DISJUNTOR
+        value: "20"
 
 services:
   - type: keyvalue
@@ -65,8 +81,15 @@ services:
         fromService: {type: keyvalue, name: c3a2-fila, property: connectionString}
       - key: URL_INFERENCIA
         fromService: {type: web, name: c3a2-inferencia, envVarKey: RENDER_EXTERNAL_URL}
-      - key: TIMEOUT_INFERENCIA
-        value: "90"
+      - fromGroup: c3a2-resiliencia
+      - key: MAX_TENTATIVAS
+        value: "3"
+      - key: TAREFA_IDADE_MAXIMA
+        value: "900"
+      - key: RETENCAO_DIAS
+        value: "30"
+      - key: DLQ_RETENCAO_DIAS
+        value: "7"
       - key: OTEL_SERVICE_NAME
         value: worker
       - key: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -99,8 +122,11 @@ services:
         fromService: {type: web, name: c3a2-inferencia, envVarKey: RENDER_EXTERNAL_URL}
       - key: URL_WORKER
         fromService: {type: web, name: c3a2-worker, envVarKey: RENDER_EXTERNAL_URL}
-      - key: TIMEOUT_INFERENCIA
-        value: "90"
+      - fromGroup: c3a2-resiliencia
+      - key: LIMITE_POR_MINUTO
+        value: "60"
+      - key: JWT_EXPIRA_MIN
+        value: "60"
       - key: OTEL_SERVICE_NAME
         value: gateway
       - key: OTEL_EXPORTER_OTLP_ENDPOINT
