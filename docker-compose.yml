@@ -1,33 +1,140 @@
+# Sobe o sistema inteiro com UM comando, sem precisar de .env:
+#   docker compose up --build
+#
+# Fluxo: cliente -> gateway -> inferencia (sincrono)
+#        cliente -> gateway -> [redis: fila] -> worker -> inferencia -> vetorial (assincrono)
+#
+# Os servicos se acham pelo NOME (descoberta de servicos, Aula 14). So o gateway (8000) e a
+# interface do Jaeger (16686) ficam acessiveis no host. Os padroes abaixo valem apenas para
+# o ambiente local; mude-os em um arquivo .env (veja .env.example).
+name: c3a2
+
+x-saude: &saude
+  interval: 5s
+  timeout: 4s
+  retries: 20
+  start_period: 10s
+
+x-comum: &comum
+  TOKEN_INTERNO: ${TOKEN_INTERNO:-token-interno-apenas-do-compose-local}
+  TEXTO_MAXIMO: ${TEXTO_MAXIMO:-5000}
+  TOP_K: ${TOP_K:-3}
+  NIVEL_LOG: ${NIVEL_LOG:-INFO}
+  # um traco so (-): definir a variavel vazia desliga a exportacao
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT-http://jaeger:4318}
+  OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+
+x-resiliencia: &resiliencia
+  TIMEOUT_CONEXAO: ${TIMEOUT_CONEXAO:-5}
+  TIMEOUT_INFERENCIA: ${TIMEOUT_INFERENCIA:-10}
+  RETENTATIVAS: ${RETENTATIVAS:-3}
+  BACKOFF_BASE: ${BACKOFF_BASE:-0.5}
+  LIMITE_FALHAS: ${LIMITE_FALHAS:-3}
+  ESPERA_DISJUNTOR: ${ESPERA_DISJUNTOR:-20}
+
+x-fila: &fila
+  REDIS_URL: redis://redis:6379/0
+  REDIS_TIMEOUT: ${REDIS_TIMEOUT:-5}
+  REDIS_TIMEOUT_CONEXAO: ${REDIS_TIMEOUT_CONEXAO:-3}
+  TAREFA_VALIDADE: ${TAREFA_VALIDADE:-86400}
+
+x-banco: &banco
+  DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@vetorial:5432/plataforma
+  DB_TIMEOUT: ${DB_TIMEOUT:-5}
+  DB_POOL_MAXIMO: ${DB_POOL_MAXIMO:-3}
+
 services:
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["dados-fila:/data"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      retries: 5
+      <<: *saude
+    restart: unless-stopped
+
+  # armazenamento vetorial: Postgres 17 + pgvector. Sem porta publicada no host.
+  vetorial:
+    build: {context: ., dockerfile: vetorial/Dockerfile}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: plataforma
+    volumes: ["dados-vetorial:/var/lib/postgresql/data"]
+    healthcheck:
+      # -h 127.0.0.1: pelo socket ele responde "pronto" ainda durante a inicializacao
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "plataforma"]
+      <<: *saude
+    restart: unless-stopped
 
   inferencia:
-    build: ./inferencia
+    build: {context: ., dockerfile: inferencia/Dockerfile}
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      <<: [*comum, *resiliencia, *banco]
+      OTEL_SERVICE_NAME: inferencia
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_API_URL: ${LLM_API_URL:-https://api.openai.com/v1/chat/completions}
+      LLM_MODELO: ${LLM_MODELO:-gpt-4o-mini}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-5}
     depends_on:
-      redis: {condition: service_healthy}
+      vetorial: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/saude', timeout=3)"]
+      <<: *saude
+    restart: unless-stopped
 
   worker:
-    build: ./worker
+    build: {context: ., dockerfile: worker/Dockerfile}
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      <<: [*comum, *resiliencia, *fila, *banco]
+      OTEL_SERVICE_NAME: worker
+      URL_INFERENCIA: http://inferencia:8001
+      MAX_TENTATIVAS: ${MAX_TENTATIVAS:-3}
+      TAREFA_IDADE_MAXIMA: ${TAREFA_IDADE_MAXIMA:-900}
+      ESPERA_MAXIMA: ${ESPERA_MAXIMA:-30}
+      RETENCAO_DIAS: ${RETENCAO_DIAS:-30}
+      DLQ_RETENCAO_DIAS: ${DLQ_RETENCAO_DIAS:-7}
+      INTERVALO_EXPURGO: ${INTERVALO_EXPURGO:-3600}
     depends_on:
       redis: {condition: service_healthy}
+      vetorial: {condition: service_healthy}
+      inferencia: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/saude', timeout=3)"]
+      <<: *saude
+    restart: unless-stopped
 
   gateway:
-    build: ./gateway
+    build: {context: ., dockerfile: gateway/Dockerfile}
     ports: ["8000:8000"]
     environment:
-      - URL_INFERENCIA=http://inferencia:8001
-      - JWT_SEGREDO=${JWT_SEGREDO:-troque-este-segredo}
-    depends_on: [inferencia]
+      <<: [*comum, *resiliencia, *fila]
+      OTEL_SERVICE_NAME: gateway
+      URL_INFERENCIA: http://inferencia:8001
+      URL_WORKER: http://worker:8002
+      JWT_SEGREDO: ${JWT_SEGREDO:-segredo-apenas-do-compose-local-troque-em-producao}
+      JWT_EXPIRA_MIN: ${JWT_EXPIRA_MIN:-60}
+      USUARIO_DEMO: ${USUARIO_DEMO:-aluno}
+      SENHA_DEMO: ${SENHA_DEMO:-senha-local-do-compose}
+      LIMITE_POR_MINUTO: ${LIMITE_POR_MINUTO:-60}
+      DESPERTAR_SERVICOS: ${DESPERTAR_SERVICOS:-1}
+      DESPERTAR_INTERVALO: ${DESPERTAR_INTERVALO:-30}
+      DESPERTAR_TIMEOUT: ${DESPERTAR_TIMEOUT:-90}
+    depends_on:
+      redis: {condition: service_healthy}
+      inferencia: {condition: service_healthy}
+      worker: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/saude', timeout=3)"]
+      <<: *saude
+    restart: unless-stopped
 
-# Observe: os servicos se referenciam pelo NOME (inferencia, redis),
-# nunca por IP fixo. Isso e descoberta de servicos. (Aula 14)
+  # coletor e interface dos traces (Aula 15): http://localhost:16686
+  # imagem sem shell, por isso sem healthcheck; ninguem depende dela para subir
+  jaeger:
+    image: jaegertracing/jaeger:2.23.0
+    ports: ["16686:16686"]
+    restart: unless-stopped
+
+volumes:
+  dados-fila:
+  dados-vetorial:
