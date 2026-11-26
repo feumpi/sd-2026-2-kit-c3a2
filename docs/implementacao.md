@@ -391,6 +391,38 @@ projetado: sem credenciais configuradas, recusou todo login.
 
 ![Trace único no Honeycomb](imagens/trace-honeycomb.jpg)
 
+## Tarefa 5 — Cold start no ambiente publicado (26/11/2026)
+
+**Problema encontrado:** medição feita depois de os três serviços registrarem o desligamento
+(22:56 e 22:59 UTC), com acesso externo só ao gateway:
+
+- o gateway acordou em cerca de 18 s;
+- inferência e worker não registraram nenhuma linha por mais de 15 minutos, apesar dos pings de
+  despertar e das chamadas do gateway;
+- cada tentativa do gateway voltava com erro em cerca de 1 s, e o `/predict` respondeu 503 por
+  mais de 5 minutos;
+- um `curl` externo ao `/saude` acordou o worker em 17,6 s e a inferência em 27,6 s;
+- enquanto acordados, as chamadas internas os mantiveram ativos (a inferência desligou
+  exatamente 15 minutos após a última chamada do worker).
+
+O código de status devolvido nas tentativas não foi registrado. Relatos de outros projetos
+descrevem um 429 da borda do Render para serviços adormecidos
+([exemplo](https://github.com/edmullen/credentials-demo/pull/47)); não confirmado aqui.
+
+**Decisão:** `GET /` no ambiente publicado passa a servir uma página que abre o `/saude` da
+inferência e do worker em quadros, no navegador do visitante, e leva ao `/docs` em 45 s. Sem
+endereço `https` (compose local), continua o redirecionamento. É um desvio do contrato
+planejado para a rota. O README documenta também o caminho por `curl`.
+
+**Alternativas descartadas:** disfarçar o agente do usuário ou os cabeçalhos das chamadas entre
+serviços (seria contornar a proteção do provedor); ping externo periódico (exige outra conta e
+três serviços sempre ligados esgotariam as 750 h mensais em cerca de 10 dias).
+
+**Latências publicadas:** em [trade-offs](trade-offs.md#publicado).
+
+**Revisão do advisor:** apontou que o despertar só pode partir do cliente, que o ajuste antes
+sugerido (`URL_WORKER`) não acordaria o worker, e propôs a página no gateway.
+
 <!--
 Modelo para as próximas etapas:
 

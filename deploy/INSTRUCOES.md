@@ -45,7 +45,10 @@ No Honeycomb, um `POST /documentos` aparece como um único trace entre os três 
 
 ## Limites do plano gratuito
 
-- Serviços dormem após 15 minutos sem tráfego e levam cerca de um minuto para voltar.
+- Serviços dormem após 15 minutos sem tráfego e levam até cerca de um minuto para voltar.
+- Neste projeto, um serviço adormecido **não acordou com chamadas de outro serviço**, só com
+  acesso externo: abra a raiz do gateway no navegador (ela acorda os demais) ou chame o
+  `/saude` dos três.
 - As 750 horas mensais são compartilhadas pelo *workspace*.
 - O Postgres expira 30 dias depois de criado (mais 14 de carência) e não tem backup.
 - O Key Value não persiste: um reinício apaga a fila.

@@ -9,11 +9,23 @@ distribuído, `docker compose` e deploy gratuito.
 
 ## No ar
 
-**<https://c3a2-gateway-vlib.onrender.com>** (a raiz abre a documentação interativa da API)
+**<https://c3a2-gateway-vlib.onrender.com>**
 
-- **A primeira requisição depois de um tempo parado pode levar de 1 a 2 minutos**: no plano
-  gratuito os serviços dormem após 15 minutos sem tráfego. Se vier `503` com `Retry-After`,
-  espere e repita.
+- **Abra essa URL no navegador antes de usar.** No plano gratuito os serviços dormem após 15
+  minutos sem tráfego. A página inicial acorda a inferência e o worker e, em 45 segundos, leva à
+  documentação interativa. Espere os dois quadros mostrarem `"status":"ok"`.
+- **Sem navegador** (por exemplo, só com `curl`), acorde os três e espere cada um responder
+  (cerca de 30 segundos):
+
+  ```bash
+  curl https://c3a2-gateway-vlib.onrender.com/saude
+  curl https://c3a2-inferencia-iwrc.onrender.com/saude
+  curl https://c3a2-worker.onrender.com/saude
+  ```
+
+- **Se vier `503`** depois de uma pausa, repita o passo acima. Um serviço adormecido não acordou
+  com as chamadas do próprio gateway, só com acesso externo
+  ([detalhes](docs/trade-offs.md#publicado)).
 - **Credenciais:** o usuário e a senha do ambiente publicado são enviados ao professor por
   e-mail e não ficam no repositório.
 - O banco gratuito expira 30 dias depois da criação (criado em 26/11/2026). Depois disso, a
@@ -115,7 +127,7 @@ Na documentação interativa, faça o `POST /login`, copie o `token` e use o bot
 
 | Rota | Token | Comportamento |
 |------|-------|---------------|
-| `GET /` | não | redireciona para `/docs` |
+| `GET /` | não | vai para `/docs`; na nuvem, antes mostra a página que acorda os serviços |
 | `GET /saude` | não | responde sem depender dos outros serviços; mostra o disjuntor |
 | `POST /login` | não | `{usuario, senha}` → JWT com validade (60 min) |
 | `POST /predict` | sim | `{texto}` → sentimento e confiança |

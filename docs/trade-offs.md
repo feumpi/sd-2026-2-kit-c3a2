@@ -72,7 +72,36 @@ já construídas): 22,5 s nas três medições.
 
 ### Publicado
 
-Medição em andamento.
+Render (Virgínia), medido de uma máquina no Brasil em 26/11/2026.
+
+**Cold start** (serviço adormecido, acordado por acesso externo):
+
+| Serviço | Tempo até responder |
+|---------|---------------------|
+| gateway | cerca de 18 s |
+| worker | 17,6 s |
+| inferência | 27,6 s |
+
+Cada valor é uma única medição; inferência e worker foram acordados em paralelo.
+
+**O que não funcionou:** com os três dormindo, um acesso só ao gateway o acordou, mas as
+chamadas dele não acordaram a inferência nem o worker: por mais de 5 minutos o `/predict`
+respondeu 503 e nenhum dos dois registrou subida. As chamadas voltavam com erro em cerca de
+1 s, em vez de esperar o serviço subir. Um acesso externo os acordou. Por isso a página inicial
+publicada faz o navegador de quem visita abrir o `/saude` de cada um.
+
+**Aquecido** (6 amostras):
+
+| Etapa | Mediana | Máximo |
+|-------|---------|--------|
+| `GET /saude` | 149 ms | 157 ms |
+| `POST /predict` (síncrono) | 199 ms | 203 ms |
+| `POST /documentos` (202) | 146 ms | 158 ms |
+| documento concluído | 294 ms | 308 ms |
+| `POST /buscar` | 206 ms | 471 ms |
+| `POST /perguntar` (LLM simulado) | 221 ms | 348 ms |
+
+A maior parte dos cerca de 150 ms de `/saude` é a viagem entre o cliente e a região do serviço.
 
 ## O que se trocou por quê
 
@@ -83,11 +112,13 @@ Medição em andamento.
 - **URLs públicas entre serviços.** O plano gratuito não recebe tráfego privado: cada salto
   entre serviços sai pela internet em HTTPS, o que soma latência e exige token interno. Em
   rede privada (plano pago) os dois custos diminuiriam.
-- **Cold start contra horas gratuitas.** Não há ping periódico para manter serviços acordados.
-  O gateway apenas acorda os outros quando ele próprio sobe, e acorda o worker quando há
-  documento pendente.
-- **Tempo-limite longo na nuvem.** 90 s por tentativa (10 s no local) toleram o serviço
-  acordando; em troca, uma falha real demora mais a ser percebida até o disjuntor abrir.
+- **Cold start contra horas gratuitas.** Não há ping periódico para manter serviços acordados:
+  três serviços sempre ligados gastariam a cota do mês em cerca de 10 dias. O preço é o passo
+  de despertar pelo navegador depois de uma pausa; um serviço pago, que não dorme, o eliminaria.
+- **Tempo-limite longo na nuvem.** 90 s por tentativa (10 s no local) foram pensados para
+  esperar um serviço acordando. Como o pedido a um serviço adormecido volta com erro quase
+  imediato, o prazo longo só pesa numa falha real de resposta lenta, que demora mais a ser
+  percebida até o disjuntor abrir.
 - **Limite no login.** Atrás do proxy da hospedagem não há garantia documentada de qual
   cabeçalho traz o IP real sem poder ser forjado; usa-se o endereço da conexão, e na nuvem a
   cota do `/login` pode ser compartilhada entre clientes. Prefere-se isso a um limite que se

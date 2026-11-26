@@ -112,7 +112,7 @@ cliente ──HTTPS/JWT────> │ login · jwt · rate limit · roteament
 
 | Rota | Auth | Comportamento |
 |------|------|---------------|
-| `GET /` | não | redireciona para `/docs` |
+| `GET /` | não | redireciona para `/docs`; na nuvem, página que acorda os serviços e leva a ele |
 | `GET /saude` | não | rápido, não depende de outros serviços; mostra os disjuntores |
 | `POST /login` | não | `{usuario, senha}` → JWT |
 | `POST /predict` | JWT | síncrono: `{texto}` → sentimento (contrato do kit) |
