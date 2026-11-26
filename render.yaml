@@ -122,6 +122,8 @@ services:
         fromService: {type: keyvalue, name: c3a2-fila, property: connectionString}
       - key: URL_INFERENCIA
         value: https://c3a2-inferencia-iwrc.onrender.com
+      - key: URL_WORKER
+        value: https://c3a2-worker.onrender.com
       - fromGroup: c3a2-resiliencia
       - key: LIMITE_POR_MINUTO
         value: "60"
