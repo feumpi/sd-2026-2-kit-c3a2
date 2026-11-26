@@ -444,6 +444,9 @@ sugerido (`URL_WORKER`) não acordaria o worker, e propôs a página no gateway.
 - Falta ao usuário: enviar as credenciais ao professor por e-mail e postar no AVA somente o link
   do repositório.
 
+**Revisão do advisor (final):** sem bloqueios; a correção do cold start está verificada e não há
+mudança de código depois dela. Pediu o aviso no README sobre tarefa que fica `pendente`.
+
 <!--
 Modelo para as próximas etapas:
 
