@@ -16,7 +16,7 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | 5 Deploy | concluída em 26/11/2026 |
 | 7 Observabilidade no Honeycomb | confirmada em 26/11/2026 |
 | 9, 10 e F2 | concluídas em 26/11/2026 |
-| F3 Verificação final | falta a postagem no AVA pelo usuário |
+| F3 Verificação final | concluída em 26/11/2026; entregue no AVA |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
 
@@ -441,8 +441,8 @@ sugerido (`URL_WORKER`) não acordaria o worker, e propôs a página no gateway.
 - Busca no histórico: sem o usuário, a senha publicados ou chave do Honeycomb.
 - `referencia/` removida. Os excludes dela no `pyproject.toml` ficaram, porque alterar esse
   arquivo republicaria os três serviços.
-- Falta ao usuário: postar no AVA o link do repositório e as credenciais do ambiente publicado
-  (decisão revista; ver a tabela de decisões).
+- Entrega: o usuário confirmou a postagem no AVA do link do repositório e das credenciais do
+  ambiente publicado (decisão revista; ver a tabela de decisões).
 
 **Revisão do advisor (final):** sem bloqueios; a correção do cold start está verificada e não há
 mudança de código depois dela. Pediu o aviso no README sobre tarefa que fica `pendente`.
