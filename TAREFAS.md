@@ -46,7 +46,8 @@ gateway nunca ficar público sem autenticação e haver uma única parada para o
 - [x] Conta no [Honeycomb](https://ui.honeycomb.io), região US
 - [x] Na Tarefa 5, quando o Blueprint mostrar os campos no painel: criar a **Ingest API key** do
       Honeycomb e preenchê-la (decisão do usuário: não criar antes)
-- [ ] Depois do deploy, enviar usuário e senha do ambiente publicado ao professor por e-mail
+- [ ] Depois do deploy, postar no AVA o link do repositório e o usuário e a senha do ambiente
+      publicado
 
 O banco publicado é criado pelo Blueprint na Tarefa 5 (não criar antes: expira em 30 dias).
 
@@ -162,7 +163,7 @@ CAP, custo e latencia do seu sistema.
 
 - [x] Arquitetura (diagrama), como executar do zero, rotas com exemplos, variáveis de ambiente
 - [x] URL pública, LGPD, trade-offs; aviso de que as credenciais do ambiente publicado
-      foram enviadas ao professor por e-mail (**sem** colocá-las no repositório)
+      são informadas ao professor no AVA (**sem** colocá-las no repositório)
 - [x] Aviso de que, no ambiente publicado, a primeira requisição após inatividade pode levar
       de 1 a 2 minutos
 - [x] Créditos ao kit do Prof. Howard Roatti
@@ -172,12 +173,12 @@ CAP, custo e latencia do seu sistema.
 - [x] Remover `referencia/` e os `README.md` de espera em `inferencia/` e `worker/`
 - [x] Clone em OUTRA máquina (ou diretório limpo) e rode o comando unico seguindo só o README
 - [x] A URL publica esta no ar?
-- [ ] Usuário confirmou o envio das credenciais ao professor por e-mail
+- [ ] Usuário confirmou a postagem do link e das credenciais no AVA
 - [x] Toda configuracao esta em variavel de ambiente (nada fixo no codigo)?
 - [x] Os logs estao livres de dados pessoais?
 - [x] `uv run pytest`, `uv run pytest -m e2e` e `uv run ruff check .` verdes
 - [x] Commits enviados ao GitHub
-- [x] Lembrar o usuário de postar **apenas o link do repositório** no AVA
+- [x] Lembrar o usuário da entrega no AVA (link do repositório e credenciais)
 
 ## Extensoes opcionais (R8) - DISPENSADAS
 

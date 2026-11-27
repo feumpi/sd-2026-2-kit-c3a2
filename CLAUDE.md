@@ -210,11 +210,11 @@ funcionam** (faltam os Dockerfiles dos outros serviços).
 
 ## Entrega
 
-Código no GitHub, README completo, URL pública no ar. No AVA vai **apenas o link do
-repositório**; lembre o usuário disso. Trabalho individual (Felipe Umpierre). Não copiar
-projetos de colegas.
+Código no GitHub, README completo, URL pública no ar. No AVA vão o link do repositório e as
+credenciais do ambiente publicado. Trabalho individual (Felipe Umpierre). Não copiar projetos
+de colegas.
 
-**Credenciais do ambiente publicado** (decisão do usuário): nunca no repositório, no README
-ou no AVA. O usuário as envia por e-mail ao professor (endereço no edital). O README informa
-isso e documenta os padrões que valem apenas no compose local. Não envie e-mail por conta
-própria.
+**Credenciais do ambiente publicado** (decisão do usuário em 26/11/2026): nunca no
+repositório nem no README. O usuário as informa somente na entrega do AVA, junto do link; nada
+é enviado por e-mail. O README informa isso e documenta os padrões que valem apenas no compose
+local.

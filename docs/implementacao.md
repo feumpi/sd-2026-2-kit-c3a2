@@ -16,7 +16,7 @@ resultado. Regras de preenchimento em [CLAUDE.md](CLAUDE.md).
 | 5 Deploy | concluída em 26/11/2026 |
 | 7 Observabilidade no Honeycomb | confirmada em 26/11/2026 |
 | 9, 10 e F2 | concluídas em 26/11/2026 |
-| F3 Verificação final | falta o envio das credenciais e do link pelo usuário |
+| F3 Verificação final | falta a postagem no AVA pelo usuário |
 
 ## Fase 0 — Preparação do ambiente (26/11/2026)
 
@@ -112,7 +112,7 @@ escolhas simples e de reuso.
 | Tema | Decisão | Motivo |
 |------|---------|--------|
 | Banco na nuvem | **Postgres gratuito do Render**, no lugar do Neon | a organização disponível no Neon está em plano pago por uso, e o edital exige free tier |
-| Credenciais publicadas | e-mail ao professor | no README público permitiriam uso por qualquer um (leitura de textos alheios, estouro de cota); no AVA contrariariam o "APENAS o link" do §9 |
+| Credenciais publicadas | entrega no AVA, junto do link (revisto no mesmo dia; antes, e-mail) | no README público permitiriam uso por qualquer um (leitura de textos alheios, estouro de cota); o e-mail também não é previsto no edital. Ressalva: o §9 pede "APENAS o link"; o usuário avalia que não será problema para o professor |
 | Honeycomb | região US | — |
 | Vulnerabilidades | atualizar | — |
 
@@ -441,8 +441,8 @@ sugerido (`URL_WORKER`) não acordaria o worker, e propôs a página no gateway.
 - Busca no histórico: sem o usuário, a senha publicados ou chave do Honeycomb.
 - `referencia/` removida. Os excludes dela no `pyproject.toml` ficaram, porque alterar esse
   arquivo republicaria os três serviços.
-- Falta ao usuário: enviar as credenciais ao professor por e-mail e postar no AVA somente o link
-  do repositório.
+- Falta ao usuário: postar no AVA o link do repositório e as credenciais do ambiente publicado
+  (decisão revista; ver a tabela de decisões).
 
 **Revisão do advisor (final):** sem bloqueios; a correção do cold start está verificada e não há
 mudança de código depois dela. Pediu o aviso no README sobre tarefa que fica `pendente`.

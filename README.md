@@ -30,8 +30,8 @@ distribuído, `docker compose` e deploy gratuito.
 - **Se uma tarefa continuar `pendente`** por mais de um minuto, repita o mesmo passo: o worker
   só recebe tráfego quando há documentos e pode ter adormecido enquanto você usava as outras
   rotas.
-- **Credenciais:** o usuário e a senha do ambiente publicado são enviados ao professor por
-  e-mail e não ficam no repositório.
+- **Credenciais:** o usuário e a senha do ambiente publicado são informados ao professor na
+  entrega do AVA e não ficam no repositório.
 - O banco gratuito expira 30 dias depois da criação (criado em 26/11/2026). Depois disso, a
   indexação e a busca param no ambiente publicado; localmente nada muda.
 
